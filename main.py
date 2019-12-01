@@ -9,6 +9,7 @@ from bs4 import BeautifulSoup
 
 def main():
     failed_lines = []  # don't retry lines that are known to not work
+    improved_lines = 0
 
     initial_delay = settings()['initial_delay_time_seconds']
     print_and_log(f"\n\nStarting in {initial_delay} seconds, switch to the Celeste window!")
@@ -28,6 +29,7 @@ def main():
             celeste_tas = celeste_tas_file_read.readlines()
 
         # find a valid line of input
+        start_time = time.perf_counter()
         valid_line = False
         while not valid_line:
             line_num = random.randint(7, len(celeste_tas) - 1)  # the 7 is to ignore the chapter restart inputs
@@ -36,6 +38,10 @@ def main():
 
             if ',' in line and '#' not in line and 'Read' not in line and line_num not in failed_lines:
                 valid_line = True
+            else:
+                if time.perf_counter() - start_time >= 5:
+                    print_and_log(f"Valid input finding took 5 seconds, exiting ({len(failed_lines)} scanned lines, {len(celeste_tas)} lines in Celeste.tas)")
+                    raise SystemExit
 
         # split the line apart, subtract 1 from the frame number, and rebuild it
         line_split = line.split(',')
@@ -63,7 +69,8 @@ def main():
             with open(os.path.join(settings()['celeste_path'], 'Celeste.tas'), 'w') as celeste_tas_file:
                 celeste_tas_file.write(''.join(celeste_tas))
         else:
-            print_and_log(f"WORKED! {new_time} < {target_time} (original was {og_target_time})")
+            improved_lines += 1
+            print_and_log(f"IMPROVEMENT #{improved_lines} FOUND! {new_time} < {target_time} (original was {og_target_time})")
             target_time = new_time
             failed_lines = []
 
