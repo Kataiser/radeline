@@ -11,7 +11,7 @@ def main():
     failed_lines = []  # don't retry lines that are known to not work
 
     initial_delay = settings()['initial_delay_time_seconds']
-    print_and_log(f"Starting in {initial_delay} seconds, switch to the Celeste window!")
+    print_and_log(f"\n\nStarting in {initial_delay} seconds, switch to the Celeste window!")
     time.sleep(initial_delay)
 
     print_and_log("Getting reference data")
