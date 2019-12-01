@@ -1,0 +1,5 @@
+{
+    "celeste_path": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Celeste",
+    "initial_delay_time_seconds": 5,
+    "worst_case_time": 5
+}

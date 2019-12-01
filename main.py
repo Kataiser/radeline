@@ -1,3 +1,4 @@
+import json
 import os
 import random
 import time
@@ -7,22 +8,23 @@ from bs4 import BeautifulSoup
 
 
 def main():
-    celeste_path = r'C:\Program Files (x86)\Steam\steamapps\common\Celeste'
+    settings()['celeste_path'] = r'C:\Program Files (x86)\Steam\steamapps\common\Celeste'
     failed_lines = []
 
-    print_and_log("Starting in 3 seconds, switch to the Celeste window!")
-    time.sleep(3)
+    initial_delay = settings()['initial_delay_time_seconds']
+    print_and_log(f"Starting in {initial_delay} seconds, switch to the Celeste window!")
+    time.sleep(initial_delay)
 
     print_and_log("Getting reference data")
     run_tas()
 
-    save_data = get_current_session(os.path.join(celeste_path, 'saves', 'debug.celeste'))
+    save_data = get_current_session(os.path.join(settings()['celeste_path'], 'saves', 'debug.celeste'))
     target_time = og_target_time = int(save_data['time'])
     target_level = save_data['level']
     print_and_log(f"Target time is {target_time} in level {target_level}")
 
     while True:
-        with open(os.path.join(celeste_path, 'Celeste.tas'), 'r') as celeste_tas_file_read:
+        with open(os.path.join(settings()['celeste_path'], 'Celeste.tas'), 'r') as celeste_tas_file_read:
             celeste_tas = celeste_tas_file_read.readlines()
 
         valid_line = False
@@ -40,11 +42,11 @@ def main():
         print_and_log(f"Replacing line {line_num + 1}: {line} to {line_modified.lstrip(' ')}", end='')
 
         celeste_tas[line_num] = line_modified
-        with open(os.path.join(celeste_path, 'Celeste.tas'), 'w') as celeste_tas_file:
+        with open(os.path.join(settings()['celeste_path'], 'Celeste.tas'), 'w') as celeste_tas_file:
             celeste_tas_file.write(''.join(celeste_tas))
 
         run_tas()
-        save_data = get_current_session(os.path.join(celeste_path, 'saves', 'debug.celeste'))
+        save_data = get_current_session(os.path.join(settings()['celeste_path'], 'saves', 'debug.celeste'))
         new_level = save_data['level']
         new_time = int(save_data['time'])
 
@@ -53,7 +55,7 @@ def main():
             failed_lines.append(line_num)
 
             celeste_tas[line_num] = original_line
-            with open(os.path.join(celeste_path, 'Celeste.tas'), 'w') as celeste_tas_file:
+            with open(os.path.join(settings()['celeste_path'], 'Celeste.tas'), 'w') as celeste_tas_file:
                 celeste_tas_file.write(''.join(celeste_tas))
         else:
             print_and_log(f"WORKED! {new_time} < {target_time} (original was {og_target_time})")
@@ -61,7 +63,7 @@ def main():
             failed_lines = []
 
 
-def get_current_session(save_path):
+def get_current_session(save_path: str) -> dict:
     with open(save_path, 'r') as save_file:
         save_file_read = save_file.readlines()
 
@@ -89,14 +91,19 @@ def run_tas():
     keyboard.press('p')
     time.sleep(0.1)
     keyboard.release('p')
-    time.sleep(5)
+    time.sleep(settings()['worst_case_time'])
 
 
-def print_and_log(text, *args, **kwargs):
+def print_and_log(text: str, *args, **kwargs):
     print(text, *args, **kwargs)
 
     with open('output_log.txt', 'a') as output_log:
         output_log.write(text)
+
+
+def settings() -> dict:
+    with open('settings.json.txt', 'r') as settings_file:
+        return json.load(settings_file)
 
 
 if __name__ == '__main__':
