@@ -3,4 +3,7 @@
 
  Chaos monkey that improves the [Celeste TAS](https://github.com/ShootMe/CelesteTAS). Its results go [here](https://github.com/Kataiser/CelesteTAS/tree/radeline-results).
 
-NOTE: don't run this yet, needs more work to make it at all flexible.
+## Instructions
+1. Make sure the data in Celeste.tas has a breakpoint on the very last line and a chapter restart at the beginning
+2. Make sure the most recently run command in Celeste is the correct chapter load (ex. `load 4` or `rmx2 7`)
+3. Install Python (with pip) and run `run.bat`
