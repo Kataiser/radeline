@@ -21,7 +21,7 @@ def main():
     save_data = get_current_session(os.path.join(settings()['celeste_path'], 'saves', 'debug.celeste'))
     target_time = og_target_time = int(save_data['time'])
     target_level = save_data['level']
-    print_and_log(f"Target time is {target_time} in level {target_level}")
+    print_and_log(f"Target time is {target_time} in level {target_level}\n")
 
     while True:
         with open(os.path.join(settings()['celeste_path'], 'Celeste.tas'), 'r') as celeste_tas_file_read:
@@ -41,7 +41,7 @@ def main():
         line_split = line.split(',')
         new_frame = int(line_split[0]) - 1
         line_modified = f"{' ' * (4 - len(str(new_frame)))}{new_frame},{','.join(line_split[1:]).rstrip(',')}\n"
-        print_and_log(f"Replacing line {line_num + 1}: {line} to {line_modified.lstrip(' ')}", end='')
+        print_and_log(f"Replacing line {line_num + 1}: {line} to {line_modified.lstrip(' ')[:-1]}")
 
         # save Celeste.tas with the changed line
         celeste_tas[line_num] = line_modified
@@ -101,11 +101,11 @@ def run_tas():
     time.sleep(settings()['worst_case_time'])
 
 
-def print_and_log(text: str, *args, **kwargs):
-    print(text, *args, **kwargs)
+def print_and_log(text: str):
+    print(text)
 
     with open('output_log.txt', 'a') as output_log:
-        output_log.write(text)
+        output_log.write(f'{text}\n')
 
 
 def settings() -> dict:
