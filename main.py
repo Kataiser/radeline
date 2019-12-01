@@ -8,7 +8,6 @@ from bs4 import BeautifulSoup
 
 
 def main():
-    settings()['celeste_path'] = r'C:\Program Files (x86)\Steam\steamapps\common\Celeste'
     failed_lines = []
 
     initial_delay = settings()['initial_delay_time_seconds']
