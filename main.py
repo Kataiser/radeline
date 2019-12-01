@@ -10,8 +10,9 @@ from bs4 import BeautifulSoup
 def main():
     failed_lines = []  # don't retry lines that are known to not work
     improved_lines = 0
+    line_finding_timeout = settings()['line_finding_timeout']
 
-    initial_delay = settings()['initial_delay_time_seconds']
+    initial_delay = settings()['initial_delay_time']
     print_and_log(f"\n\nStarting in {initial_delay} seconds, switch to the Celeste window!")
     time.sleep(initial_delay)
 
@@ -30,24 +31,27 @@ def main():
 
         # find a valid line of input
         start_time = time.perf_counter()
+        lines_tried = 0
         valid_line = False
         while not valid_line:
             line_num = random.randint(7, len(celeste_tas) - 1)  # the 7 is to ignore the chapter restart inputs
             original_line = celeste_tas[line_num]
             line = original_line.lstrip(' ').rstrip('\n')
+            lines_tried += 1
 
             if ',' in line and '#' not in line and 'Read' not in line and line_num not in failed_lines:
                 valid_line = True
             else:
-                if time.perf_counter() - start_time >= 5:
-                    print_and_log(f"Valid input finding took 5 seconds, exiting ({len(failed_lines)} scanned lines, {len(celeste_tas)} lines in Celeste.tas)")
+                if time.perf_counter() - start_time >= line_finding_timeout:
+                    print_and_log(f"Valid input finding took {line_finding_timeout} seconds, exiting "
+                                  f"({len(failed_lines)} scanned lines, {len(celeste_tas)} lines in Celeste.tas)")
                     raise SystemExit
 
         # split the line apart, subtract 1 from the frame number, and rebuild it
         line_split = line.split(',')
         new_frame = int(line_split[0]) - 1
         line_modified = f"{' ' * (4 - len(str(new_frame)))}{new_frame},{','.join(line_split[1:]).rstrip(',')}\n"
-        print_and_log(f"Replacing line {line_num + 1}: {line} to {line_modified.lstrip(' ')[:-1]}")
+        print_and_log(f"Replacing line {line_num + 1}/{len(celeste_tas)} (try {lines_tried}): {line} to {line_modified.lstrip(' ')[:-1]}")
 
         # save Celeste.tas with the changed line
         celeste_tas[line_num] = line_modified
