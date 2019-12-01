@@ -1,0 +1,2 @@
+beautifulsoup4==4.8.1
+keyboard==0.13.4
