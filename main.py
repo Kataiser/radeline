@@ -57,6 +57,7 @@ def main():
                 celeste_tas_file.write(''.join(celeste_tas))
         else:
             print_and_log(f"WORKED! {new_time} < {target_time} (original was {og_target_time})")
+            target_time = new_time
             failed_lines = []
 
 
