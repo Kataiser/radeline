@@ -6,4 +6,5 @@
 ## Instructions
 1. Make sure the data in Celeste.tas has a breakpoint on the very last line and a chapter restart at the beginning
 2. Make sure the most recently run command in Celeste is the correct chapter load (ex. `load 4` or `rmx2 7`)
-3. Install Python (with pip) and run `run.bat`
+3. Change `KeyStart` in `Saves\modsettings-CelesteTAS.celeste` to `- P`, because I couldn't get the default to work
+4. Install Python (with pip) and run `run.bat`
