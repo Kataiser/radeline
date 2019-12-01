@@ -91,7 +91,7 @@ def run_tas():
     keyboard.press('enter')
     time.sleep(0.1)
     keyboard.release('enter')
-    time.sleep(0.5)
+    time.sleep(0.25)
     keyboard.press('`')
     time.sleep(0.1)
     keyboard.release('`')
