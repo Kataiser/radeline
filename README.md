@@ -1,7 +1,7 @@
 # Radeline
 [![buhbaiSG](buhbaiSG.png)](https://www.frankerfacez.com/emoticon/316755-buhbaiSG)
 
-Chaos monkey that improves the [Celeste TAS](https://github.com/ShootMe/CelesteTAS) by randomly changing inputs. Its results go [here](https://github.com/Kataiser/CelesteTAS/tree/radeline-results).
+Chaos monkey that improves the [Celeste TAS](https://github.com/ShootMe/CelesteTAS) by randomly changing inputs. Progress is [here](https://github.com/Kataiser/radeline/projects/1) and results go [here](https://github.com/Kataiser/CelesteTAS/tree/radeline-results).
 
 ## Instructions
 1. Make sure the data in Celeste.tas has a breakpoint on the very last line and a chapter restart at the beginning
