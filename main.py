@@ -54,17 +54,23 @@ def main():
                 if time.perf_counter() - search_start_time >= line_finding_timeout:
                     print_and_log(f"Valid input finding took {line_finding_timeout} seconds, exiting "
                                   f"({len(failed_lines)} scanned lines, {len(celeste_tas)} lines in Celeste.tas)")
+                                  
+                    if settings()['exit_game_when_done']:
+                        keyboard.press('`')
+                        time.sleep(0.1)
+                        keyboard.release('`')
+                        keyboard.write('exit')
+                        time.sleep(0.1)
+                        keyboard.press('enter')
+                        time.sleep(0.1)
+                        keyboard.release('enter')
+                                                      
                     raise SystemExit
 
         # split the line apart, subtract 1 from the frame number, and rebuild it
         line_split = line.split(',')
         new_frame = int(line_split[0]) - 1
-        if 'F,' in line and settings()['tweak_feathers_angles'] and random.choice((True, False)):
-            # 50/50 chance to tweak a feather angle instead
-            tweaked_angle = int(line_split[-1]) + random.choice((-2, -1, 1, 2))
-            line_modified = f"{' ' * (4 - len(str(line_split[0])))}{','.join(line_split[:-1])},{tweaked_angle}\n"
-        else:
-            line_modified = f"{' ' * (4 - len(str(new_frame)))}{new_frame},{','.join(line_split[1:]).rstrip(',')}\n"
+        line_modified = f"{' ' * (4 - len(str(new_frame)))}{new_frame},{','.join(line_split[1:]).rstrip(',')}\n"
 
         print_and_log(f"Replacing line {line_num + 1}/{len(celeste_tas)} (try {lines_tried}): {line} to {line_modified.lstrip(' ')[:-1]}")
 

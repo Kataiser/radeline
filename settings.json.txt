@@ -4,6 +4,6 @@
     "worst_case_time": 10,
     "line_finding_timeout": 10,
     "pause_key": "O",
-    "tweak_feathers_angles": true,
+    "exit_game_when_done": true,
     "input_file_trims": [7, -1]
 }
