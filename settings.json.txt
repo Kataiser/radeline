@@ -1,6 +1,9 @@
 {
     "celeste_path": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Celeste",
     "initial_delay_time": 5,
-    "worst_case_time": 5,
-    "line_finding_timeout": 10
+    "worst_case_time": 10,
+    "line_finding_timeout": 10,
+    "pause_key": "O",
+    "tweak_feathers_angles": true,
+    "input_file_trims": [7, -1]
 }
