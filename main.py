@@ -9,10 +9,9 @@ from bs4 import BeautifulSoup
 
 
 def main():
-    failed_lines = []  # don't retry lines that are known to not work
     improved_lines = 0
-    line_finding_timeout = settings()['line_finding_timeout']
     pause_key = settings()['pause_key']
+    input_file_trims = settings()['input_file_trims']
 
     initial_delay = settings()['initial_delay_time']
     print_and_log(f"\n\nStarting in {initial_delay} seconds, switch to the Celeste window!")
@@ -29,50 +28,36 @@ def main():
 
     with open(os.path.join(settings()['celeste_path'], 'Celeste.tas'), 'r') as celeste_tas_file_read:
         celeste_tas = celeste_tas_file_read.readlines()
-    print_and_log(f"Beginning optimization of {len(celeste_tas)} lines in Celeste.tas. Press {pause_key} to pause, and make sure to keep the Celeste window focused.\n")
 
-    while True:
+    # build a list of line numbers that are valid inputs
+    valid_line_nums = []
+    for possible_line in enumerate(celeste_tas):
+        if input_file_trims[0] < possible_line[0] < (len(celeste_tas) + input_file_trims[1]):
+            if ',' in possible_line[1] and '#' not in possible_line[1] and 'Read' not in possible_line[1]:
+                valid_line_nums.append(possible_line[0])
+
+    if settings()['random_order']:
+        random.shuffle(valid_line_nums)
+
+    print_and_log(f"Beginning optimization of Celeste.tas ({len(celeste_tas)} lines, {len(valid_line_nums)} inputs). "
+                  f"Press {pause_key} to pause, and make sure to keep the Celeste window focused.\n")
+
+    for valid_line in enumerate(valid_line_nums):
+        # load this each time because it may have changed
         with open(os.path.join(settings()['celeste_path'], 'Celeste.tas'), 'r') as celeste_tas_file_read:
             celeste_tas = celeste_tas_file_read.readlines()
 
-        input_file_trims = settings()['input_file_trims']
-        lines_tried = 0
-        search_start_time = time.perf_counter()
-
-        # find a valid line of input
-        valid_line = False
-        while not valid_line:
-            line_num = random.randrange(input_file_trims[0], len(celeste_tas) + input_file_trims[1])  # the 7 is to ignore the chapter restart inputs
-            original_line = celeste_tas[line_num]
-            line = original_line.lstrip(' ').rstrip('\n')
-            lines_tried += 1
-
-            if ',' in line and '#' not in line and 'Read' not in line and line_num not in failed_lines:
-                valid_line = True
-            else:
-                # once we've run out of valid lines in the file
-                if time.perf_counter() - search_start_time >= line_finding_timeout:
-                    print_and_log(f"Valid input finding took {line_finding_timeout} seconds, exiting "
-                                  f"({len(failed_lines)} scanned lines, {len(celeste_tas)} lines in Celeste.tas)")
-                                  
-                    if settings()['exit_game_when_done']:
-                        keyboard.press('`')
-                        time.sleep(0.1)
-                        keyboard.release('`')
-                        keyboard.write('exit')
-                        time.sleep(0.1)
-                        keyboard.press('enter')
-                        time.sleep(0.1)
-                        keyboard.release('enter')
-                                                      
-                    raise SystemExit
-
         # split the line apart, subtract 1 from the frame number, and rebuild it
+        line_num = valid_line[1]
+        original_line = celeste_tas[line_num]
+        line = original_line.lstrip(' ').rstrip('\n')
         line_split = line.split(',')
         new_frame = int(line_split[0]) - 1
         line_modified = f"{' ' * (4 - len(str(new_frame)))}{new_frame},{','.join(line_split[1:]).rstrip(',')}\n"
 
-        print_and_log(f"Replacing line {line_num + 1}/{len(celeste_tas)} (try {lines_tried}): {line} to {line_modified.lstrip(' ')[:-1]}")
+        # output progress
+        progress = format((valid_line[0] / len(valid_line_nums)) * 100, '.1f')
+        print_and_log(f"({progress}%) Line {line_num + 1}/{len(celeste_tas)}: {line} to {line_modified.lstrip(' ')[:-1]}")
 
         # save Celeste.tas with the changed line
         celeste_tas[line_num] = line_modified
@@ -86,9 +71,6 @@ def main():
         new_time = int(save_data['time'])
 
         if new_level != target_level or new_time >= target_time:  # don't count ties, rare as they are
-            print_and_log(f"Didn't save time ({new_level}, {new_time})")  # same message regardless of failure reason
-            failed_lines.append(line_num)
-
             # revert and save
             celeste_tas[line_num] = original_line
             with open(os.path.join(settings()['celeste_path'], 'Celeste.tas'), 'w') as celeste_tas_file:
@@ -97,13 +79,25 @@ def main():
             improved_lines += 1
             print_and_log(f"IMPROVEMENT #{improved_lines} FOUND! {new_time} < {target_time} (original was {og_target_time})")
             target_time = new_time
-            failed_lines = []
 
         if paused:
             print_and_log("Now paused. Press enter in this window to resume.")
             input()
             print_and_log(f"Resuming in {initial_delay} seconds, switch to the Celeste window")
             time.sleep(initial_delay)
+            settings.cache_clear()
+
+    if settings()['exit_game_when_done']:
+        keyboard.press('`')
+        time.sleep(0.1)
+        keyboard.release('`')
+        keyboard.write('exit')
+        time.sleep(0.1)
+        keyboard.press('enter')
+        time.sleep(0.1)
+        keyboard.release('enter')
+
+    raise SystemExit
 
 
 # read chapter time and current level (room) from debug.celeste
