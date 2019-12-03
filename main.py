@@ -88,15 +88,25 @@ def main():
             settings.cache_clear()
 
     if settings()['exit_game_when_done']:
+        # super ugly
         keyboard.press('`')
         time.sleep(0.1)
         keyboard.release('`')
-        keyboard.write('exit')
+        keyboard.press('e')
         time.sleep(0.1)
+        keyboard.release('e')
+        keyboard.press('tab')
+        time.sleep(0.1)
+        keyboard.release('tab')
+        time.sleep(0.1)
+        keyboard.press('tab')
+        time.sleep(0.1)
+        keyboard.release('tab')
         keyboard.press('enter')
         time.sleep(0.1)
         keyboard.release('enter')
 
+    print_and_log(f"Finished with {improved_lines} optimizations found")
     raise SystemExit
 
 
