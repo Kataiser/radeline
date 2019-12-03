@@ -83,7 +83,7 @@ def main():
         if paused:
             print_and_log("Now paused. Press enter in this window to resume.")
             input()
-            print_and_log(f"Resuming in {initial_delay} seconds, switch to the Celeste window")
+            print_and_log(f"Resuming in {initial_delay} seconds, switch to the Celeste window\n")
             time.sleep(initial_delay)
             settings.cache_clear()
 
@@ -152,7 +152,7 @@ def run_tas(pauseable=True):
 
         if pauseable and not has_paused and keyboard.is_pressed(pause_key_code):
             has_paused = True
-            print_and_log("Pause key pressed")
+            print_and_log("\nPause key pressed")
 
         if time_is_up:
             if pauseable:
