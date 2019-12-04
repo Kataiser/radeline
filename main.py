@@ -69,6 +69,9 @@ def main():
         save_data = get_current_session(os.path.join(settings()['celeste_path'], 'saves', 'debug.celeste'))
         new_level = save_data['level']
         new_time = int(save_data['time'])
+        
+        if new_time >= target_time:
+            print_and_log(f"Resynced but didn't save time {new_time} >= {target_time}")
 
         if new_level != target_level or new_time >= target_time:  # don't count ties, rare as they are
             # revert and save
