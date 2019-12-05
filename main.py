@@ -1,3 +1,4 @@
+import copy
 import functools
 import json
 import os
@@ -21,10 +22,10 @@ def main():
     run_tas(pauseable=False)
 
     # assumes that Celeste.tas is currently functional and has a breakpoint at the end
-    save_data = get_current_session(os.path.join(settings()['celeste_path'], 'saves', 'debug.celeste'))
-    target_time = og_target_time = int(save_data['time'])
-    target_level = save_data['level']
-    print_and_log(f"Target time is {target_time} in level {target_level}")
+    target_data = parse_save_file(os.path.join(settings()['celeste_path'], 'saves', 'debug.celeste'))
+    target_time = og_target_time = target_data['time']
+    del target_data['time']
+    print_and_log(f"Target time is {target_time} with data {target_data}")
 
     with open(os.path.join(settings()['celeste_path'], 'Celeste.tas'), 'r') as celeste_tas_file_read:
         celeste_tas = celeste_tas_file_read.readlines()
@@ -64,31 +65,37 @@ def main():
         with open(os.path.join(settings()['celeste_path'], 'Celeste.tas'), 'w') as celeste_tas_file:
             celeste_tas_file.write(''.join(celeste_tas))
 
-        # see if it worked
+        # run with the changed line
         paused = run_tas()
-        save_data = get_current_session(os.path.join(settings()['celeste_path'], 'saves', 'debug.celeste'))
-        new_level = save_data['level']
-        new_time = int(save_data['time'])
-        
-        if new_time >= target_time:
-            print_and_log(f"Resynced but didn't save time {new_time} >= {target_time}")
+        new_data = parse_save_file(os.path.join(settings()['celeste_path'], 'saves', 'debug.celeste'))
+        new_time = new_data['time']
+        del new_data['time']
 
-        if new_level != target_level or new_time >= target_time:  # don't count ties, rare as they are
+        # output message if it almost worked
+        if new_time >= target_time and new_data == target_data:
+            print_and_log(f"Resynced but didn't save time {new_time} >= {target_time}")
+        if new_data['level'] == target_data['level'] and new_data != target_data:
+            display_data = copy.deepcopy(new_data)
+            del display_data['level']
+            print_and_log(f"Resynced but didn't get correct collectibles {display_data}")
+
+        # see if it worked (don't count ties, rare as they are)
+        if new_time < target_time and new_data == target_data:
+            improved_lines += 1
+            print_and_log(f"IMPROVEMENT #{improved_lines} FOUND! {new_time} < {target_time} (original was {og_target_time})")
+            target_time = new_time
+        else:
             # revert and save
             celeste_tas[line_num] = original_line
             with open(os.path.join(settings()['celeste_path'], 'Celeste.tas'), 'w') as celeste_tas_file:
                 celeste_tas_file.write(''.join(celeste_tas))
-        else:
-            improved_lines += 1
-            print_and_log(f"IMPROVEMENT #{improved_lines} FOUND! {new_time} < {target_time} (original was {og_target_time})")
-            target_time = new_time
 
         if paused:
             print_and_log("Now paused. Press enter in this window to resume.")
             input()
             print_and_log(f"Resuming in {initial_delay} seconds, switch to the Celeste window\n")
             time.sleep(initial_delay)
-            settings.cache_clear()
+            settings.cache_clear()  # reload settings file
 
     if settings()['exit_game_when_done']:
         # super ugly
@@ -109,20 +116,31 @@ def main():
         time.sleep(0.1)
         keyboard.release('enter')
 
-    print_and_log(f"Finished with {improved_lines} optimizations found")
+    print_and_log(f"\nFinished with {improved_lines} optimizations found")
     raise SystemExit
 
 
 # read chapter time and current level (room) from debug.celeste
-def get_current_session(save_path: str) -> dict:
+def parse_save_file(save_path: str) -> dict:
     with open(save_path, 'r') as save_file:
         save_file_read = save_file.readlines()
+
+    parsed = {}
 
     for line in save_file_read:
         if '<CurrentSession ' in line:
             soup = BeautifulSoup(line, 'lxml')  # probably overkill
             currentsession = soup.find('currentsession')
-            return {'time': currentsession.get('time'), 'level': currentsession.get('level')}
+            parsed['time'] = int(currentsession.get('time'))
+            parsed['level'] = currentsession.get('level')
+            parsed['cassette'] = currentsession.get('cassette')
+            parsed['heartgem'] = currentsession.get('heartgem')
+        elif '<TotalStrawberries>' in line:
+            soup = BeautifulSoup(line, 'lxml')  # definitely overkill
+            totalstrawberries = soup.find('totalstrawberries')
+            parsed['berries'] = int(totalstrawberries.text)
+
+    return parsed
 
 
 # simulate keypresses to run the last debug command, run the TAS, and wait a bit
@@ -155,7 +173,7 @@ def run_tas(pauseable=True):
 
         if pauseable and not has_paused and keyboard.is_pressed(pause_key_code):
             has_paused = True
-            print_and_log("\nPause key pressed")
+            print_and_log("\nPause key pressed")  # technically not paused yet
 
         if time_is_up:
             if pauseable:
