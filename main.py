@@ -98,6 +98,7 @@ def main():
             settings.cache_clear()  # reload settings file
 
     if settings()['exit_game_when_done']:
+        print_and_log("Closing Celeste")
         # super ugly
         keyboard.press('`')
         time.sleep(0.1)
