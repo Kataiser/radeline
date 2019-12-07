@@ -96,7 +96,8 @@ def main():
             print_and_log(f"Resuming in {initial_delay} seconds, switch to the Celeste window\n")
             time.sleep(initial_delay)
             settings.cache_clear()  # reload settings file
-
+            
+    print_and_log(f"\nFinished with {improved_lines} optimization{'s' if improved_lines != 1 else ''} found")
     if settings()['exit_game_when_done']:
         print_and_log("Closing Celeste")
         # super ugly
@@ -117,7 +118,6 @@ def main():
         time.sleep(0.1)
         keyboard.release('enter')
 
-    print_and_log(f"\nFinished with {improved_lines} optimizations found")
     raise SystemExit
 
 
