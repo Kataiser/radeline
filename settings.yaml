@@ -13,12 +13,12 @@ exit_game_when_done: true
 # Whether to randomize the order of attempted lines, or to go sequentially
 random_order: true
 
-# Used to track if the TAS is still running by looking at Celeste Studio's CPU usage
-studio_cpu_threshold: 10
-studio_cpu_interval: 0.1
-
 # How many lines to trim off the start and end respectively of Celeste.tas
 # Useful for ignoring chapter restarts, S&Qs, getting to the chapter complete screen, etc.
 input_file_trims:
   - 7
   - 1
+
+# Used to track if the TAS is still running by looking at Celeste Studio's CPU usage
+studio_cpu_threshold: 10
+studio_cpu_interval: 0.1
