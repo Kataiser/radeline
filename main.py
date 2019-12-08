@@ -5,8 +5,8 @@ import random
 import time
 
 import keyboard
-from bs4 import BeautifulSoup
 import yaml
+from bs4 import BeautifulSoup
 
 
 def main():
@@ -26,15 +26,15 @@ def main():
     target_time = og_target_time = target_data['time']
     del target_data['time']
     print_and_log(f"Target time is {format_time(target_time)} with data {target_data}")
-
-    with open(os.path.join(settings()['celeste_path'], 'Celeste.tas'), 'r') as celeste_tas_file_read:
-        celeste_tas = celeste_tas_file_read.readlines()
+    celeste_tas = access_celeste_tas()
 
     # build a list of line numbers that are valid inputs
     valid_line_nums = []
     for possible_line in enumerate(celeste_tas):
         if input_file_trims[0] < possible_line[0] < (len(celeste_tas) + input_file_trims[1]):
-            if ',' in possible_line[1] and '#' not in possible_line[1] and 'Read' not in possible_line[1]:
+            line = possible_line[1]
+
+            if '#' not in line and 'Read' not in line and line not in ('', '  40'):
                 valid_line_nums.append(possible_line[0])
 
     if settings()['random_order']:
@@ -45,28 +45,26 @@ def main():
 
     for valid_line in enumerate(valid_line_nums):
         # load this each time because it may have changed
-        with open(os.path.join(settings()['celeste_path'], 'Celeste.tas'), 'r') as celeste_tas_file_read:
-            celeste_tas = celeste_tas_file_read.readlines()
+        celeste_tas = access_celeste_tas()
 
         # split the line apart, subtract 1 from the frame number, and rebuild it
         line_num = valid_line[1]
         original_line = celeste_tas[line_num]
-        line = original_line.lstrip(' ').rstrip('\n')
-        line_split = line.split(',')
+        line_clean = original_line.lstrip(' ').rstrip('\n')
+        line_split = line_clean.split(',')
         new_frame = int(line_split[0]) - 1
         line_modified = f"{' ' * (4 - len(str(new_frame)))}{new_frame},{','.join(line_split[1:]).rstrip(',')}\n"
 
         # output progress
         progress = format((valid_line[0] / len(valid_line_nums)) * 100, '.1f')
-        print_and_log(f"({progress}%) Line {line_num + 1}/{len(celeste_tas)}: {line} to {line_modified.lstrip(' ')[:-1]}")
+        print_and_log(f"({progress}%) Line {line_num + 1}/{len(celeste_tas)}: {line_clean} to {line_modified.lstrip(' ')[:-1]}")
 
         # save Celeste.tas with the changed line
         celeste_tas[line_num] = line_modified
-        with open(os.path.join(settings()['celeste_path'], 'Celeste.tas'), 'w') as celeste_tas_file:
-            celeste_tas_file.write(''.join(celeste_tas))
+        access_celeste_tas(write=celeste_tas)
 
         # run with the changed line
-        paused = run_tas()
+        paused = run_tas(pauseable=True)
         new_data = parse_save_file(os.path.join(settings()['celeste_path'], 'saves', 'debug.celeste'))
         new_time = new_data['time']
         del new_data['time']
@@ -87,8 +85,7 @@ def main():
         else:
             # revert and save
             celeste_tas[line_num] = original_line
-            with open(os.path.join(settings()['celeste_path'], 'Celeste.tas'), 'w') as celeste_tas_file:
-                celeste_tas_file.write(''.join(celeste_tas))
+            access_celeste_tas(write=celeste_tas)
 
         if paused:
             print_and_log("Now paused. Press enter in this window to resume.")
@@ -146,7 +143,7 @@ def parse_save_file(save_path: str) -> dict:
 
 
 # simulate keypresses to run the last debug command, run the TAS, and wait a bit
-def run_tas(pauseable=True):
+def run_tas(pauseable: bool):
     pause_key_code = keyboard.key_to_scan_codes(settings()['pause_key'])[0]
     has_paused = False
 
@@ -184,6 +181,7 @@ def run_tas(pauseable=True):
                 break
 
 
+# convert the weird timecodes Celeste uses into a readable format
 def format_time(timecode: int) -> str:
     timecode_str = str(timecode)
 
@@ -197,6 +195,14 @@ def format_time(timecode: int) -> str:
         return '0:0.000'
 
 
+def access_celeste_tas(write: list = None):
+    with open(os.path.join(settings()['celeste_path'], 'Celeste.tas'), 'r+') as celeste_tas_file:
+        if write:
+            celeste_tas_file.write(''.join(write))
+        else:
+            return celeste_tas_file.readlines()
+
+
 def print_and_log(text: str):
     print(text)
 
@@ -207,7 +213,7 @@ def print_and_log(text: str):
 @functools.lru_cache(maxsize=1)
 def settings() -> dict:
     with open('settings.yaml', 'r') as settings_file:
-        return yaml.safe_load(settings_file.read())
+        return yaml.safe_load(settings_file)
 
 
 if __name__ == '__main__':
