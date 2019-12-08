@@ -32,9 +32,10 @@ def main():
 
     # build a list of line numbers that are valid inputs
     valid_line_nums = []
-    for possible_line in enumerate(celeste_tas[input_file_trims[0]:input_file_trims[1]]):
-        if ',' in possible_line[1] and '#' not in possible_line[1] and 'Read' not in possible_line[1]:
-            valid_line_nums.append(possible_line[0])
+    for possible_line in enumerate(celeste_tas):
+        if input_file_trims[0] < possible_line[0] < (len(celeste_tas) + input_file_trims[1]):
+            if ',' in possible_line[1] and '#' not in possible_line[1] and 'Read' not in possible_line[1]:
+                valid_line_nums.append(possible_line[0])
 
     if settings()['random_order']:
         random.shuffle(valid_line_nums)
