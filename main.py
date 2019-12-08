@@ -25,7 +25,7 @@ def main():
     target_data = parse_save_file(os.path.join(settings()['celeste_path'], 'saves', 'debug.celeste'))
     target_time = og_target_time = target_data['time']
     del target_data['time']
-    print_and_log(f"Target time is {target_time} with data {target_data}")
+    print_and_log(f"Target time is {format_time(target_time)} with data {target_data}")
 
     with open(os.path.join(settings()['celeste_path'], 'Celeste.tas'), 'r') as celeste_tas_file_read:
         celeste_tas = celeste_tas_file_read.readlines()
@@ -73,7 +73,7 @@ def main():
 
         # output message if it almost worked
         if new_time >= target_time and new_data == target_data:
-            print_and_log(f"Resynced but didn't save time {new_time} >= {target_time}")
+            print_and_log(f"Resynced but didn't save time {format_time(new_time)} >= {format_time(target_time)}")
         if new_data['level'] == target_data['level'] and new_data != target_data:
             display_data = copy.deepcopy(new_data)
             del display_data['level']
@@ -82,7 +82,7 @@ def main():
         # see if it worked (don't count ties, rare as they are)
         if new_time < target_time and new_data == target_data:
             improved_lines += 1
-            print_and_log(f"IMPROVEMENT #{improved_lines} FOUND! {new_time} < {target_time} (original was {og_target_time})")
+            print_and_log(f"IMPROVEMENT #{improved_lines} FOUND! {format_time(new_time)} < {format_time(target_time)} (original was {format_time(og_target_time)})")
             target_time = new_time
         else:
             # revert and save
@@ -97,7 +97,8 @@ def main():
             time.sleep(initial_delay)
             settings.cache_clear()  # reload settings file
             
-    print_and_log(f"\nFinished with {improved_lines} optimization{'s' if improved_lines != 1 else ''} found")
+    print_and_log(f"\nFinished with {improved_lines} optimization{'s' if improved_lines != 1 else ''} found ({format_time(og_target_time)} -> {format_time(target_time)})")
+
     if settings()['exit_game_when_done']:
         print_and_log("Closing Celeste")
         # super ugly
@@ -181,6 +182,19 @@ def run_tas(pauseable=True):
                 return has_paused
             else:
                 break
+
+
+def format_time(timecode: int) -> str:
+    timecode_str = str(timecode)
+
+    try:
+        minutes = int(int(timecode_str[:-7]) / 60)
+        seconds = int(int(timecode_str[:-7]) % 60)
+        ms = int(timecode_str[-7:-4])
+
+        return f"{minutes}:{str(seconds).rjust(2, '0')}.{str(ms).rjust(3, '0')}"
+    except ValueError:
+        return '0:0.000'
 
 
 def print_and_log(text: str):
