@@ -1,12 +1,12 @@
 import copy
 import functools
-import json
 import os
 import random
 import time
 
 import keyboard
 from bs4 import BeautifulSoup
+import yaml
 
 
 def main():
@@ -206,8 +206,8 @@ def print_and_log(text: str):
 
 @functools.lru_cache(maxsize=1)
 def settings() -> dict:
-    with open('settings.json.txt', 'r') as settings_file:
-        return json.load(settings_file)
+    with open('settings.yaml', 'r') as settings_file:
+        return yaml.safe_load(settings_file.read())
 
 
 if __name__ == '__main__':
