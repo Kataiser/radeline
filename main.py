@@ -5,11 +5,18 @@ import random
 import time
 
 import keyboard
+import psutil
 import yaml
 from bs4 import BeautifulSoup
 
 
 def main():
+    try:
+        studio_pid = [p.pid for p in psutil.process_iter(attrs=['name']) if p.info['name'] == 'Celeste.Studio.exe'][0]
+    except IndexError:
+        print("Celeste Studio isn't running, exiting")
+        raise SystemExit
+
     improved_lines = 0
     pause_key = settings()['pause_key']
     input_file_trims = settings()['input_file_trims']
@@ -19,7 +26,7 @@ def main():
     time.sleep(initial_delay)
 
     print_and_log("Getting reference data")
-    run_tas(pauseable=False)
+    run_tas(studio_pid, pauseable=False)
 
     # assumes that Celeste.tas is currently functional and has a breakpoint at the end
     target_data = parse_save_file(os.path.join(settings()['celeste_path'], 'saves', 'debug.celeste'))
@@ -40,8 +47,8 @@ def main():
     if settings()['random_order']:
         random.shuffle(valid_line_nums)
 
-    print_and_log(f"Beginning optimization of Celeste.tas ({len(celeste_tas)} lines, {len(valid_line_nums)} inputs). "
-                  f"Press {pause_key} to pause, and make sure to keep the Celeste window focused.\n")
+    print_and_log(f"Beginning optimization of Celeste.tas ({len(celeste_tas)} lines, {len(valid_line_nums)} inputs)\n"
+                  f"Press {pause_key} to pause, and make sure to keep the Celeste window focused and Celeste Studio open\n")
 
     for valid_line in enumerate(valid_line_nums):
         # load this each time because it may have changed
@@ -64,7 +71,7 @@ def main():
         access_celeste_tas(write=celeste_tas)
 
         # run with the changed line
-        paused = run_tas(pauseable=True)
+        paused = run_tas(studio_pid, pauseable=True)
         new_data = parse_save_file(os.path.join(settings()['celeste_path'], 'saves', 'debug.celeste'))
         new_time = new_data['time']
         del new_data['time']
@@ -143,7 +150,10 @@ def parse_save_file(save_path: str) -> dict:
 
 
 # simulate keypresses to run the last debug command, run the TAS, and wait a bit
-def run_tas(pauseable: bool):
+def run_tas(studio_pid: int, pauseable: bool):
+    studio_process = psutil.Process(studio_pid)
+    cpu_threshold = settings()['studio_cpu_threshold']
+    cpu_interval = settings()['studio_cpu_interval']
     pause_key_code = keyboard.key_to_scan_codes(settings()['pause_key'])[0]
     has_paused = False
 
@@ -163,18 +173,17 @@ def run_tas(pauseable: bool):
     keyboard.press('p')
     time.sleep(0.1)
     keyboard.release('p')
-    start_time = time.perf_counter()
     time.sleep(0.5)
 
     while True:
-        time.sleep(0.02)
-        time_is_up = time.perf_counter() - start_time >= settings()['worst_case_time']
-
         if pauseable and not has_paused and keyboard.is_pressed(pause_key_code):
             has_paused = True
             print_and_log("\nPause key pressed")  # technically not paused yet
 
-        if time_is_up:
+        # studio uses a bunch of cpu when the TAS is running, so
+        if studio_process.cpu_percent(interval=cpu_interval) < cpu_threshold:
+            time.sleep(1)
+
             if pauseable:
                 return has_paused
             else:
