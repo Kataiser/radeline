@@ -1,4 +1,4 @@
 @echo off
-pip install -r requirements.txt
-python main.py
+python -OO packages_setup.py
+python -OO main.py
 pause
