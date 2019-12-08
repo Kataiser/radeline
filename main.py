@@ -123,8 +123,6 @@ def main():
         time.sleep(0.1)
         keyboard.release('enter')
 
-    raise SystemExit
-
 
 # read chapter time and current level (room) from debug.celeste
 def parse_save_file(save_path: str) -> dict:
