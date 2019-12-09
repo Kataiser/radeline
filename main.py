@@ -14,7 +14,7 @@ def main():
     try:
         studio_pid = [p.pid for p in psutil.process_iter(attrs=['name']) if p.info['name'] == 'Celeste.Studio.exe'][0]
     except IndexError:
-        print("Celeste Studio isn't running, exiting")
+        print("\n\nCeleste Studio isn't running, exiting")
         raise SystemExit
 
     improved_lines = 0
@@ -152,6 +152,7 @@ def run_tas(studio_pid: int, pauseable: bool):
     studio_process = psutil.Process(studio_pid)
     cpu_threshold = settings()['studio_cpu_threshold']
     cpu_interval = settings()['studio_cpu_interval']
+    previous_cpu_usage = 100
     pause_key_code = keyboard.key_to_scan_codes(settings()['pause_key'])[0]
     has_paused = False
 
@@ -172,20 +173,25 @@ def run_tas(studio_pid: int, pauseable: bool):
     time.sleep(0.1)
     keyboard.release('p')
     time.sleep(0.5)
+    start_time = time.perf_counter()
 
     while True:
         if pauseable and not has_paused and keyboard.is_pressed(pause_key_code):
             has_paused = True
             print_and_log("\nPause key pressed")  # technically not paused yet
 
-        # studio uses a bunch of cpu when the TAS is running, so
-        if studio_process.cpu_percent(interval=cpu_interval) < cpu_threshold:
-            time.sleep(1)
+        # studio uses a bunch of cpu when the TAS is running, so I can use that to detect when the TAS completes
+        cpu_usage = studio_process.cpu_percent(interval=cpu_interval)
+        tas_has_finished = cpu_usage < cpu_threshold and previous_cpu_usage < cpu_threshold  # just to be more sure
+        if tas_has_finished or time.perf_counter() - start_time > 40:  # just in case CPU usage based detection fails somehow
+            time.sleep(0.5)
 
             if pauseable:
                 return has_paused
             else:
                 break
+
+        previous_cpu_usage = cpu_usage
 
 
 # convert the weird timecodes Celeste uses into a readable format
@@ -211,7 +217,10 @@ def access_celeste_tas(write: list = None):
 
 
 def print_and_log(text: str):
-    print(text)
+    if text.startswith('\n\n'):
+        print(text.lstrip('\n'))
+    else:
+        print(text)
 
     with open('output_log.txt', 'a') as output_log:
         output_log.write(f'{text}\n')

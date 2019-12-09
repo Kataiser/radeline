@@ -5,7 +5,8 @@ celeste_path: C:\Program Files (x86)\Steam\steamapps\common\Celeste
 initial_delay_time: 5
 
 # Note that pausing only actually starts when the TAS completes
-# Be sure to pause only when the TAS is running and hold the pause key for at least 0.1 seconds (sorry)
+# Be sure to pause only when the TAS is running, and hold the pause key for a bit
+# Once it says "Pause key pressed" you can safely alt-tab
 pause_key: O
 
 exit_game_when_done: true
@@ -20,5 +21,6 @@ input_file_trims:
   - 1
 
 # Used to track if the TAS is still running by looking at Celeste Studio's CPU usage
-studio_cpu_threshold: 10
-studio_cpu_interval: 0.1
+# Don't touch unless you know what you're doing
+studio_cpu_threshold: 8
+studio_cpu_interval: 0.2
