@@ -11,12 +11,7 @@ from bs4 import BeautifulSoup
 
 
 def main():
-    try:
-        studio_pid = [p.pid for p in psutil.process_iter(attrs=['name']) if p.info['name'] == 'Celeste.Studio.exe'][0]
-    except IndexError:
-        print("\n\nCeleste Studio isn't running, exiting")
-        raise SystemExit
-
+    studio_pid = get_studio_pid()
     improved_lines = 0
     pause_key = settings()['pause_key']
     input_file_trims = settings()['input_file_trims']
@@ -46,7 +41,7 @@ def main():
         if input_file_trims[0] < possible_line[0] < (len(celeste_tas) + input_file_trims[1]):
             line = possible_line[1]
 
-            if '#' not in line and 'Read' not in line and line not in ('', '  40'):
+            if '#' not in line and 'Read' not in line and ',' in line:
                 valid_line_nums.append(possible_line[0])
 
     if settings()['random_order']:
@@ -105,6 +100,7 @@ def main():
             print_and_log(f"Resuming in {initial_delay} seconds, switch to the Celeste window\n")
             time.sleep(initial_delay)
             settings.cache_clear()  # reload settings file
+            studio_pid = get_studio_pid()
             
     print_and_log(f"\nFinished with {improved_lines} optimization{'s' if improved_lines != 1 else ''} found ({format_time(og_target_time)} -> {format_time(target_time)})")
 
@@ -219,6 +215,16 @@ def access_celeste_tas(write: list = None):
             celeste_tas_file.write(''.join(write))
         else:
             return celeste_tas_file.readlines()
+
+
+def get_studio_pid() -> int:
+    studio_pids = [p.pid for p in psutil.process_iter(attrs=['name']) if p.info['name'] == 'Celeste.Studio.exe']
+
+    if studio_pids:
+        return studio_pids[0]
+    else:
+        print("\n\nCeleste Studio isn't running, exiting")
+        raise SystemExit
 
 
 def print_and_log(text: str):
