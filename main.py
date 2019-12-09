@@ -21,8 +21,13 @@ def main():
     pause_key = settings()['pause_key']
     input_file_trims = settings()['input_file_trims']
 
+    if settings()['clear_output_log_on_startup']:
+        open('output_log.txt', 'w').close()
+    else:
+        print_and_log('\n')
+
     initial_delay = settings()['initial_delay_time']
-    print_and_log(f"\n\nStarting in {initial_delay} seconds, switch to the Celeste window!")
+    print_and_log(f"Starting in {initial_delay} seconds, switch to the Celeste window!")
     time.sleep(initial_delay)
 
     print_and_log("Getting reference data")
@@ -217,10 +222,7 @@ def access_celeste_tas(write: list = None):
 
 
 def print_and_log(text: str):
-    if text.startswith('\n\n'):
-        print(text.lstrip('\n'))
-    else:
-        print(text)
+    print(text)
 
     with open('output_log.txt', 'a') as output_log:
         output_log.write(f'{text}\n')

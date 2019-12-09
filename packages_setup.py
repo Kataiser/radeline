@@ -10,6 +10,7 @@ def main():
         from bs4 import BeautifulSoup
     except ModuleNotFoundError:
         subprocess.run('pip install -r requirements.txt')
+        print('\n')
 
 
 if __name__ == '__main__':

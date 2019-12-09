@@ -14,6 +14,8 @@ exit_game_when_done: true
 # Whether to randomize the order of attempted lines, or to go sequentially
 random_order: true
 
+clear_output_log_on_startup: true
+
 # How many lines to trim off the start and end respectively of Celeste.tas
 # Useful for ignoring chapter restarts, S&Qs, getting to the chapter complete screen, etc.
 input_file_trims:
