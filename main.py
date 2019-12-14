@@ -173,9 +173,9 @@ def run_tas(studio_pid: int, pauseable: bool):
     keyboard.press('`')
     time.sleep(0.1)
     keyboard.release('`')
-    keyboard.press('p')
+    keyboard.press(12)  # - (minus/hyphen)
     time.sleep(0.1)
-    keyboard.release('p')
+    keyboard.release(12)
     time.sleep(0.5)
     start_time = time.perf_counter()
 
