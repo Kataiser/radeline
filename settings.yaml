@@ -21,6 +21,8 @@ pause_key: O
 random_order: true
 
 # Used to track if the TAS is still running by looking at Celeste Studio's CPU usage
-# Don't touch unless you know what you're doing
-studio_cpu_threshold: 5
+# Don't touch unless you know what you're doing (ask Kataiser if you're having problems)
+studio_cpu_threshold: 8
 studio_cpu_interval: 0.2
+studio_cpu_consecutive: 3
+studio_cpu_timeout: 40
