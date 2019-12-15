@@ -131,6 +131,7 @@ def parse_save_file(save_path: str) -> dict:
         save_file_read = save_file.readlines()
 
     parsed = {}
+    has_found_berries = False
 
     for line in save_file_read:
         if '<CurrentSession ' in line:
@@ -140,10 +141,11 @@ def parse_save_file(save_path: str) -> dict:
             parsed['level'] = currentsession.get('level')
             parsed['cassette'] = currentsession.get('cassette')
             parsed['heartgem'] = currentsession.get('heartgem')
-        elif '<TotalStrawberries>' in line:
+        elif not has_found_berries and '<TotalStrawberries>' in line:
             soup = BeautifulSoup(line, 'lxml')  # definitely overkill
             totalstrawberries = soup.find('totalstrawberries')
             parsed['total_berries'] = int(totalstrawberries.text)
+            has_found_berries = True
 
     return parsed
 
