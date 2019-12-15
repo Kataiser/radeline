@@ -135,9 +135,9 @@ def parse_save_file(save_path: str) -> dict:
     has_found_berries = False
 
     for line in save_file_read:
-        if '<CurrentSession ' in line:
+        if '<CurrentSession_Safe ' in line:
             soup = BeautifulSoup(line, 'lxml')  # probably overkill
-            currentsession = soup.find('currentsession')
+            currentsession = soup.find('currentsession_safe')
             parsed['time'] = int(currentsession.get('time'))
             parsed['level'] = currentsession.get('level')
             parsed['cassette'] = currentsession.get('cassette')
