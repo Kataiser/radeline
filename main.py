@@ -103,7 +103,7 @@ def main():
             studio_pid = get_studio_pid()
             
     print_and_log(f"\nFinished with {len(improved_lines)} optimization{'s' if len(improved_lines) != 1 else ''} found ({format_time(og_target_time)} -> {format_time(target_time)})")
-    print_and_log(f"Lines changed: {str(improved_lines)[1:-1]}")
+    print_and_log(f"Lines changed: {str(sorted(improved_lines))[1:-1]}")
 
     if settings()['exit_game_when_done']:
         print_and_log("Closing Celeste")
