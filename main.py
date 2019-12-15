@@ -12,7 +12,7 @@ from bs4 import BeautifulSoup
 
 def main():
     studio_pid = get_studio_pid()
-    improved_lines = 0
+    improved_lines = []
     pause_key = settings()['pause_key']
     input_file_trims = settings()['input_file_trims']
 
@@ -86,8 +86,8 @@ def main():
 
         # see if it worked (don't count ties, rare as they are)
         if new_time < target_time and new_data == target_data:
-            improved_lines += 1
-            print_and_log(f"IMPROVEMENT #{improved_lines} FOUND! {format_time(new_time)} < {format_time(target_time)} (original was {format_time(og_target_time)})")
+            improved_lines.append(line_num)
+            print_and_log(f"IMPROVEMENT #{len(improved_lines)} FOUND! {format_time(new_time)} < {format_time(target_time)} (original was {format_time(og_target_time)})")
             target_time = new_time
         else:
             # revert and save
@@ -102,7 +102,8 @@ def main():
             settings.cache_clear()  # reload settings file
             studio_pid = get_studio_pid()
             
-    print_and_log(f"\nFinished with {improved_lines} optimization{'s' if improved_lines != 1 else ''} found ({format_time(og_target_time)} -> {format_time(target_time)})")
+    print_and_log(f"\nFinished with {len(improved_lines)} optimization{'s' if len(improved_lines) != 1 else ''} found ({format_time(og_target_time)} -> {format_time(target_time)})")
+    print_and_log(f"Lines changed: {str(improved_lines)[1:-1]}")
 
     if settings()['exit_game_when_done']:
         print_and_log("Closing Celeste")
