@@ -106,7 +106,9 @@ def main():
     print_and_log(f"Lines changed: {str(sorted(improved_lines))[1:-1]}")
 
     if settings()['exit_game_when_done']:
-        print_and_log("Closing Celeste")
+        print_and_log("Closing Celeste and Studio")
+        psutil.Process(studio_pid).kill()
+
         # super ugly
         keyboard.press('`')
         time.sleep(0.1)
@@ -153,6 +155,10 @@ def parse_save_file(save_path: str) -> dict:
 
 # simulate keypresses to run the last debug command, run the TAS, and wait a bit
 def run_tas(studio_pid: int, pauseable: bool):
+    if not psutil.pid_exists(studio_pid):
+        print_and_log("Celeste Studio has been closed, exiting")
+        raise SystemExit
+
     studio_process = psutil.Process(studio_pid)
     cpu_threshold = settings()['studio_cpu_threshold']
     cpu_interval = settings()['studio_cpu_interval']
