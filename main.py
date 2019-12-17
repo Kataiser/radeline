@@ -11,7 +11,7 @@ from bs4 import BeautifulSoup
 
 
 def main():
-    studio_pid = get_studio_pid()
+    process_ids = get_pids()
     improved_lines = []
     pause_key = settings()['pause_key']
     input_file_trims = settings()['input_file_trims']
@@ -26,7 +26,7 @@ def main():
     time.sleep(initial_delay)
 
     print_and_log("Getting reference data")
-    run_tas(studio_pid, pauseable=False)
+    run_tas(process_ids, pauseable=False)
 
     # assumes that Celeste.tas is currently functional and has a breakpoint at the end
     target_data = parse_save_file(os.path.join(settings()['celeste_path'], 'saves', 'debug.celeste'))
@@ -71,7 +71,7 @@ def main():
         access_celeste_tas(write=celeste_tas)
 
         # run with the changed line
-        paused = run_tas(studio_pid, pauseable=True)
+        paused = run_tas(process_ids, pauseable=True)
         new_data = parse_save_file(os.path.join(settings()['celeste_path'], 'saves', 'debug.celeste'))
         new_time = new_data['time']
         del new_data['time']
@@ -100,14 +100,14 @@ def main():
             print_and_log(f"Resuming in {initial_delay} seconds, switch to the Celeste window\n")
             time.sleep(initial_delay)
             settings.cache_clear()  # reload settings file
-            studio_pid = get_studio_pid()
+            process_ids = get_pids()
             
     print_and_log(f"\nFinished with {len(improved_lines)} optimization{'s' if len(improved_lines) != 1 else ''} found ({format_time(og_target_time)} -> {format_time(target_time)})")
     print_and_log(f"Lines changed: {str(sorted(improved_lines))[1:-1]}")
 
     if settings()['exit_game_when_done']:
         print_and_log("Closing Celeste and Studio")
-        psutil.Process(studio_pid).kill()
+        psutil.Process(process_ids['studio']).kill()
 
         # super ugly
         keyboard.press('`')
@@ -154,12 +154,15 @@ def parse_save_file(save_path: str) -> dict:
 
 
 # simulate keypresses to run the last debug command, run the TAS, and wait a bit
-def run_tas(studio_pid: int, pauseable: bool):
-    if not psutil.pid_exists(studio_pid):
-        print_and_log("Celeste Studio has been closed, exiting")
-        raise SystemExit
+def run_tas(pids: dict, pauseable: bool):
+    if not psutil.pid_exists(pids['studio']):
+        print_and_log("\nCeleste Studio has been closed, pausing")
+        return True
+    elif not psutil.pid_exists(pids['celeste']):
+        print_and_log("\nCeleste has been closed, pausing")
+        return True
 
-    studio_process = psutil.Process(studio_pid)
+    studio_process = psutil.Process(pids['studio'])
     cpu_threshold = settings()['studio_cpu_threshold']
     cpu_interval = settings()['studio_cpu_interval']
     cpu_consecutive = settings()['studio_cpu_consecutive']
@@ -213,7 +216,7 @@ def format_time(timecode: int) -> str:
 
         return f"{minutes}:{str(seconds).rjust(2, '0')}.{str(ms).rjust(3, '0')}"
     except ValueError:
-        return '0:0.000'
+        return '0:00.000'
 
 
 def access_celeste_tas(write: list = None):
@@ -224,14 +227,22 @@ def access_celeste_tas(write: list = None):
             return celeste_tas_file.readlines()
 
 
-def get_studio_pid() -> int:
-    studio_pids = [p.pid for p in psutil.process_iter(attrs=['name']) if p.info['name'] == 'Celeste.Studio.exe']
+def get_pids() -> dict:
+    found_pids = {'studio': None, 'celeste': None}
+    for process in psutil.process_iter(attrs=['name']):
+        if process.info['name'] == 'Celeste.Studio.exe':
+            found_pids['studio'] = process.pid
+        elif process.info['name'] == 'Celeste.exe':
+            found_pids['celeste'] = process.pid
 
-    if studio_pids:
-        return studio_pids[0]
-    else:
-        print("\n\nCeleste Studio isn't running, exiting")
+    if not found_pids['studio']:
+        print_and_log("\n\nCeleste Studio isn't running, exiting")
         raise SystemExit
+    elif not found_pids['celeste']:
+        print_and_log("\n\nCeleste isn't running, exiting")
+        raise SystemExit
+    else:
+        return found_pids
 
 
 def print_and_log(text: str):
