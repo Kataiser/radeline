@@ -95,7 +95,7 @@ def main():
             access_celeste_tas(write=celeste_tas)
 
         if paused:
-            print_and_log("Now paused. Press enter in this window to resume.")
+            print_and_log(f"Now paused, press enter in this window to resume (currently at {len(improved_lines)} improvements)")
             input()
             print_and_log(f"Resuming in {initial_delay} seconds, switch to the Celeste window\n")
             time.sleep(initial_delay)
