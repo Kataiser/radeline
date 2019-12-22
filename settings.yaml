@@ -15,7 +15,7 @@ initial_delay_time: 5
 # Note that pausing only actually starts when the TAS completes
 # Be sure to pause only when the TAS is running, and hold the pause key for a bit
 # Once it says "Pause key pressed" you can safely alt-tab
-pause_key: "0" # That's zero
+pause_key: "0"  # That's zero
 
 # Whether to randomize the order of attempted lines, or to go sequentially
 random_order: true

@@ -132,24 +132,22 @@ def main():
 # read chapter time and current level (room) from debug.celeste
 def parse_save_file(save_path: str) -> dict:
     with open(save_path, 'r') as save_file:
-        save_file_read = save_file.readlines()
+        save_file_read = save_file.read()
 
     parsed = {}
-    has_found_berries = False
+    soup = BeautifulSoup(save_file_read, 'lxml')
 
-    for line in save_file_read:
-        if '<CurrentSession_Safe ' in line:
-            soup = BeautifulSoup(line, 'lxml')  # probably overkill
-            currentsession = soup.find('currentsession_safe')
-            parsed['time'] = int(currentsession.get('time'))
-            parsed['level'] = currentsession.get('level')
-            parsed['cassette'] = currentsession.get('cassette')
-            parsed['heartgem'] = currentsession.get('heartgem')
-        elif not has_found_berries and '<TotalStrawberries>' in line:
-            soup = BeautifulSoup(line, 'lxml')  # definitely overkill
-            totalstrawberries = soup.find('totalstrawberries')
-            parsed['total_berries'] = int(totalstrawberries.text)
-            has_found_berries = True
+    currentsession = soup.find('currentsession_safe')
+    if currentsession is None:
+        currentsession = soup.find('currentsession')
+
+    parsed['time'] = int(currentsession.get('time'))
+    parsed['level'] = currentsession.get('level')
+    parsed['cassette'] = currentsession.get('cassette')
+    parsed['heartgem'] = currentsession.get('heartgem')
+
+    totalstrawberries = soup.find('totalstrawberries')
+    parsed['total_berries'] = int(totalstrawberries.text)
 
     return parsed
 
@@ -228,6 +226,7 @@ def access_celeste_tas(write: list = None):
             return celeste_tas_file.readlines()
 
 
+# get the process IDs for Celeste and Studio
 def get_pids() -> dict:
     found_pids = {'studio': None, 'celeste': None}
     for process in psutil.process_iter(attrs=['name']):
