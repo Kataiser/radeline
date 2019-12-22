@@ -102,8 +102,9 @@ def main():
             settings.cache_clear()  # reload settings file
             process_ids = get_pids()
             
+    improved_lines_formatted = str(sorted([l + 1 for l in improved_lines]))[1:-1]
     print_and_log(f"\nFinished with {len(improved_lines)} optimization{'s' if len(improved_lines) != 1 else ''} found ({format_time(og_target_time)} -> {format_time(target_time)})")
-    print_and_log(f"Lines changed: {str(sorted(improved_lines))[1:-1]}")
+    print_and_log(f"Lines changed: {improved_lines_formatted}")
 
     if settings()['exit_game_when_done']:
         print_and_log("Closing Celeste and Studio")
