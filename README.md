@@ -10,6 +10,7 @@ Chaos monkey that optimizes the [Celeste TAS](https://github.com/ShootMe/Celeste
 4. Take a look at `settings.yaml` and make sure it's set up correctly
 5. Run Celeste Studio, don't edit anything with it though because it doesn't read Radeline's changes to Celeste.tas
 6. Install Python >= 3.6 (with pip and "Add python to environment variables") and run `run.bat`
+
 If you need any assistance, DM me on Discord at Kataiser#4640
 
 ## Why the name?
