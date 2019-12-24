@@ -1,6 +1,7 @@
 import copy
 import functools
 import os
+import platform
 import random
 import time
 
@@ -127,6 +128,10 @@ def main():
         keyboard.press('enter')
         time.sleep(0.1)
         keyboard.release('enter')
+
+    if settings()['open_celeste_tas_when_done'] and platform.system() == 'Windows':
+        print_and_log("Opening Celeste.tas")
+        os.startfile(os.path.join(settings()['celeste_path'], 'Celeste.tas'))
 
 
 # read chapter time and current level (room) from debug.celeste
