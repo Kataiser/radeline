@@ -131,7 +131,7 @@ class Radeline:
         # see if it worked (don't count ties, rare as they are)
         if new_time < self.target_time and new_data == self.target_data:
             self.improved_lines.append(line_num)
-            print_and_log(f"IMPROVEMENT #{len(self.improved_lines)} FOUND! {format_time(new_time)} < {format_time(self.target_time)} "
+            print_and_log(f"OPTIMIZATION #{len(self.improved_lines)} FOUND! {format_time(new_time)} < {format_time(self.target_time)} "
                           f"(original was {format_time(self.og_target_time)})")
             self.target_time = new_time
         else:
@@ -140,7 +140,9 @@ class Radeline:
             access_celeste_tas(write=celeste_tas)
 
         if self.paused:
-            print_and_log(f"Now paused, press enter in this window to resume (currently at {len(self.improved_lines)} improvements)", end=' ')
+            improved_lines_num = len(self.improved_lines)
+            print_and_log(f"Now paused, press enter in this window to resume "
+                          f"(currently at {improved_lines_num} optimization{'s' if improved_lines_num != 1 else ''})", end=' ')
             input()
             print_and_log(f"Resuming in {self.initial_delay} seconds, switch to the Celeste window\n")
             time.sleep(self.initial_delay)
