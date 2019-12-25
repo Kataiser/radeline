@@ -46,7 +46,7 @@ class Radeline:
         # build a list of line numbers that are valid inputs
         valid_line_nums = []
         for possible_line in enumerate(celeste_tas):
-            if input_file_trims[0] < possible_line[0] < (len(celeste_tas) + input_file_trims[1]):
+            if input_file_trims[0] < possible_line[0] < (len(celeste_tas) - input_file_trims[1]):
                 line = possible_line[1]
 
                 if '#' not in line and 'Read' not in line and ',' in line:
