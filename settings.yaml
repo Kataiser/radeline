@@ -23,6 +23,10 @@ random_order: true
 # Make sure that .tas files are assigned to a text editor (Windows only)
 open_celeste_tas_when_done: true
 
+# Do some extra optimization attempts when done
+extra_attempts: true
+extra_attempts_window_size: 3
+
 # Used to track if the TAS is still running by looking at Celeste Studio's CPU usage
 # Don't touch unless you know what you're doing (ask Kataiser if you're having problems)
 studio_cpu_threshold: 10

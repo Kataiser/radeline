@@ -3,6 +3,7 @@ import functools
 import os
 import platform
 import random
+import subprocess
 import time
 
 import keyboard
@@ -15,10 +16,10 @@ class Radeline:
     def __init__(self):
         self.pids = get_pids()
         self.improved_lines = []
+        self.improved_lines_formatted = ''
         self.initial_delay = settings()['initial_delay_time']
         self.target_data = {}
         self.target_time = self.og_target_time = 0
-        self.improved_lines_formatted = ''
         self.paused = False
 
     def run(self):
@@ -64,11 +65,23 @@ class Radeline:
                       f"Press {pause_key} to pause, and make sure to keep the Celeste window focused and Celeste Studio open\n")
 
         # perform the main operation
-        for valid_line in enumerate(valid_line_nums):
-            progress = format((valid_line[0] / len(valid_line_nums)) * 100, '.1f')
-            print_and_log(f"({progress}%) ", end='')
+        self.reduce_lines(valid_line_nums)
 
-            self.reduce_line(valid_line[1])
+        # do extra attemps for modified lines and a few neighbors
+        if settings()['extra_attempts'] and self.improved_lines:
+            extra_lines = []
+            window = settings()['extra_attempts_window_size']
+
+            for line_num in self.improved_lines:
+                for extra_line in range(line_num - window + 1, line_num + window):
+                    if extra_line in valid_line_nums and extra_line not in extra_lines:
+                        extra_lines.append(extra_line)
+
+            if settings()['random_order']:
+                random.shuffle(extra_lines)
+
+            print_and_log(f"\nFinished base processing, trying {len(extra_lines)} extra optimization{'s' if len(extra_lines) != 1 else ''}\n")
+            self.reduce_lines(extra_lines)
 
         self.improved_lines_formatted = str(sorted([line + 1 for line in self.improved_lines]))[1:-1]
         print_and_log(f"\nFinished with {len(self.improved_lines)} optimization{'s' if len(self.improved_lines) != 1 else ''} found "
@@ -206,6 +219,14 @@ class Radeline:
                 time.sleep(0.5)
                 break
 
+    # perform reduce_line() for a list of line numbers
+    def reduce_lines(self, lines):
+        for line_enum in enumerate(lines):
+            progress = format((line_enum[0] / len(lines)) * 100, '.1f')
+            print_and_log(f"({progress}%) ", end='')
+
+            self.reduce_line(line_enum[1])
+
 
 # read chapter time and current level (room) from debug.celeste
 def parse_save_file(save_path: str) -> dict:
@@ -271,11 +292,11 @@ def get_pids() -> dict:
         return found_pids
 
 
-def print_and_log(text: str, *args, **kwargs):
-    print(text, *args, **kwargs)
+def print_and_log(text: str, end='\n'):
+    print(text, end=end)
 
     with open('output_log.txt', 'a') as output_log:
-        output_log.write(f'{text}\n')
+        output_log.write(f'{text}{end}')
 
 
 @functools.lru_cache(maxsize=1)
