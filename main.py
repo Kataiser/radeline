@@ -165,7 +165,7 @@ class Radeline:
             print_and_log(f"Resuming in {self.initial_delay} seconds, switch to the Celeste window\n")
             time.sleep(self.initial_delay)
             settings.cache_clear()  # reload settings file
-            self.pids = get_pids()
+            self.pids = get_pids(silent=True)
 
     # simulate keypresses to run the last debug command, run the TAS, and wait a bit
     def run_tas(self, pauseable: bool):
@@ -274,13 +274,22 @@ def access_celeste_tas(write: list = None):
 
 
 # get the process IDs for Celeste and Studio
-def get_pids() -> dict:
-    found_pids = {'studio': None, 'celeste': None}
-    for process in psutil.process_iter(attrs=['name']):
-        if process.info['name'] == 'Celeste.Studio.exe':
-            found_pids['studio'] = process.pid
-        elif process.info['name'] == 'Celeste.exe':
-            found_pids['celeste'] = process.pid
+def get_pids(silent=False) -> dict:
+    found_pids = {'celeste': None, 'studio': None}
+
+    # https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/tasklist
+    try:
+        processes = str(subprocess.check_output('tasklist /fi "STATUS eq running"')).split(r'\r\n')
+    except subprocess.CalledProcessError:
+        processes = []
+
+    for process_line in processes:
+        process = process_line.split()
+
+        if process[0] == 'Celeste.exe':
+            found_pids['celeste'] = int(process[1])
+        elif process[0] == 'Celeste.Studio.exe':
+            found_pids['studio'] = int(process[1])
 
     if not found_pids['studio']:
         print_and_log("\n\nCeleste Studio isn't running, exiting")
@@ -288,8 +297,10 @@ def get_pids() -> dict:
     elif not found_pids['celeste']:
         print_and_log("\n\nCeleste isn't running, exiting")
         raise SystemExit
-    else:
-        return found_pids
+
+    if not silent:
+        print_and_log("Found Celeste.exe and Celeste.Studio.exe")
+    return found_pids
 
 
 def print_and_log(text: str, end='\n'):
