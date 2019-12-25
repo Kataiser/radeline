@@ -17,8 +17,8 @@ initial_delay_time: 5
 # Once it says "Pause key pressed" you can safely alt-tab
 pause_key: "0"  # That's zero
 
-# Whether to randomize the order of attempted lines, or to go sequentially
-random_order: true
+# Can be forward, reverse, or random
+order: random
 
 # Make sure that .tas files are assigned to a text editor (Windows only)
 open_celeste_tas_when_done: true

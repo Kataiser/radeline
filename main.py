@@ -58,8 +58,7 @@ class Radeline:
                 if '#' not in line and 'Read' not in line and ',' in line:
                     valid_line_nums.append(possible_line[0])
 
-        if settings()['random_order']:
-            random.shuffle(valid_line_nums)
+        valid_line_nums = order_line_list(valid_line_nums)
 
         print_and_log(f"Beginning optimization of Celeste.tas ({len(celeste_tas)} lines, {len(valid_line_nums)} inputs)\n"
                       f"Press {pause_key} to pause, and make sure to keep the Celeste window focused and Celeste Studio open\n")
@@ -77,8 +76,7 @@ class Radeline:
                     if extra_line in valid_line_nums and extra_line not in extra_lines:
                         extra_lines.append(extra_line)
 
-            if settings()['random_order']:
-                random.shuffle(extra_lines)
+            extra_lines = order_line_list(extra_lines)
 
             print_and_log(f"\nFinished base processing, trying {len(extra_lines)} extra optimization{'s' if len(extra_lines) != 1 else ''}\n")
             self.reduce_lines(extra_lines)
@@ -301,6 +299,19 @@ def get_pids(silent=False) -> dict:
     if not silent:
         print_and_log("Found Celeste.exe and Celeste.Studio.exe")
     return found_pids
+
+
+def order_line_list(lines: list) -> list:
+    order: str = settings()['order']
+
+    if order == 'forward':
+        return lines
+    elif order == 'reverse':
+        lines.reverse()
+    elif order == 'random':
+        random.shuffle(lines)
+
+    return lines
 
 
 def print_and_log(text: str, end='\n'):
