@@ -40,6 +40,11 @@ class Radeline:
         self.target_data = parse_save_file(os.path.join(settings()['celeste_path'], 'saves', 'debug.celeste'))
         self.target_time = self.og_target_time = self.target_data['time']
         del self.target_data['time']
+
+        if self.target_time == '0:00.000':
+            print_and_log("Target time is 0:00.000, exiting (follow the instructions in the readme)")
+            raise SystemExit
+
         print_and_log(f"Target time is {format_time(self.target_time)} with data {self.target_data}")
         celeste_tas = access_celeste_tas()
 
