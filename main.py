@@ -14,6 +14,7 @@ from bs4 import BeautifulSoup
 
 class Radeline:
     def __init__(self):
+        validate_settings()
         self.pids = get_pids()
         self.improved_lines = []
         self.improved_lines_formatted = ''
@@ -21,6 +22,7 @@ class Radeline:
         self.target_data = {}
         self.target_time = self.og_target_time = 0
         self.paused = False
+        self.pause_key_code = keyboard.key_to_scan_codes(settings()['pause_key'])[0]
 
     def run(self):
         pause_key = settings()['pause_key']
@@ -181,7 +183,6 @@ class Radeline:
         timeout = settings()['studio_cpu_timeout']
         cpu_usage_history = []
 
-        pause_key_code = keyboard.key_to_scan_codes(settings()['pause_key'])[0]
         self.paused = False
 
         keyboard.press('`')
@@ -204,7 +205,7 @@ class Radeline:
         start_time = time.perf_counter()
 
         while True:
-            if pauseable and not self.paused and keyboard.is_pressed(pause_key_code):
+            if pauseable and not self.paused and keyboard.is_pressed(self.pause_key_code):
                 self.paused = True
                 print_and_log("\nPause key pressed")  # technically not paused yet
 
@@ -312,6 +313,54 @@ def order_line_list(lines: list) -> list:
         random.shuffle(lines)
 
     return lines
+
+
+# just to make sure the user hasn't broken anything
+def validate_settings():
+    try:
+        settings()
+    except yaml.YAMLError as error:
+        error_tabbed = str(error).replace('\n', '\n    ')
+        print(f"Couldn't parse settings:\n    {error_tabbed}")
+        raise SystemExit
+
+    celeste_path = settings()['celeste_path']
+    bool_settings = ('exit_game_when_done', 'clear_output_log_on_startup', 'open_celeste_tas_when_done', 'extra_attempts')
+    int_settings = ('extra_attempts_window_size', 'studio_cpu_consecutive')
+    num_settings = ('initial_delay_time', 'studio_cpu_threshold', 'studio_cpu_interval', 'studio_cpu_timeout')
+
+    # makes sure that each setting is what type it needs to be, and some other checks as well
+    if not os.path.isdir(celeste_path):
+        invalid_setting(f"\"{celeste_path}\" doesn't exist")
+    if 'Celeste.exe' not in os.listdir(celeste_path):
+        invalid_setting(f"\"{celeste_path}\" is not a valid Celeste installation")
+    for bool_setting in bool_settings:
+        if not isinstance(settings()[bool_setting], bool):
+            invalid_setting(f"\"{bool_setting}\" is not either true or false")
+    for int_setting in int_settings:
+        if not isinstance(settings()[int_setting], int):
+            invalid_setting(f"\"{int_setting}\" is not an integer")
+    for num_setting in num_settings:
+        if not isinstance(settings()[num_setting], int) and not isinstance(settings()[num_setting], float):
+            invalid_setting(f"\"{num_setting}\" is not a number")
+    if settings()['order'] not in ('forward', 'reverse', 'random'):
+        invalid_setting("\"order\" is not forward, reverse, or random")
+    if len(settings()['input_file_trims']) != 2:
+        invalid_setting("\"input_file_trims\" is not two items long")
+    for trim in enumerate(settings()['input_file_trims']):
+        if not isinstance(trim[1], int):
+            invalid_setting(f"item {trim[0] + 1} is not an integer")
+    if not isinstance(settings()['pause_key'], str):
+        invalid_setting("\"pause_key\" is not text")
+    try:
+        keyboard.key_to_scan_codes(settings()['pause_key'])
+    except ValueError:
+        invalid_setting("\"pause_key\" is not a valid key")
+
+
+def invalid_setting(error_message: str):
+    print(f"Settings loading error: {error_message}")
+    raise SystemExit
 
 
 def print_and_log(text: str, end='\n'):
