@@ -91,6 +91,7 @@ class Radeline:
         if settings()['exit_game_when_done']:
             print_and_log("Closing Celeste and Studio")
             psutil.Process(self.pids['studio']).kill()
+            time.sleep(settings()['loading_time_compensation'])
 
             # super ugly
             keyboard.press('`')

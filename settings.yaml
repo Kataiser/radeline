@@ -20,6 +20,9 @@ pause_key: "0"  # That's zero
 # Can be forward, reverse, or random
 order: random
 
+# Everest now has a delay when loading the level complete screen textures, so wait this many seconds for that
+loading_time_compensation: 3
+
 # Make sure that .tas files are assigned to a text editor (Windows only)
 open_celeste_tas_when_done: true
 
