@@ -66,6 +66,7 @@ class Radeline:
                       f"Press {pause_key} to pause, and make sure to keep the Celeste window focused and Celeste Studio open\n")
 
         # perform the main operation
+        time.sleep(settings()['loading_time_compensation'])
         self.reduce_lines(valid_line_nums)
 
         # do extra attemps for modified lines and a few neighbors
@@ -146,6 +147,13 @@ class Radeline:
             display_data = copy.deepcopy(new_data)
             del display_data['level']
             print_and_log(f"Resynced but didn't get correct collectibles {display_data}")
+        if new_data['level'] == self.target_data['level']:
+            time.sleep(settings()['loading_time_compensation'])
+
+            if new_data != self.target_data:
+                display_data = copy.deepcopy(new_data)
+                del display_data['level']
+                print_and_log(f"Resynced but didn't get correct collectibles {display_data}")
 
         # see if it worked (don't count ties, rare as they are)
         if new_time < self.target_time and new_data == self.target_data:
