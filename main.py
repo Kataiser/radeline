@@ -18,6 +18,7 @@ class Radeline:
         self.pids = get_pids()
         self.improved_lines = []
         self.improved_lines_formatted = ''
+        self.frames_saved_total = 0
         self.initial_delay = settings()['initial_delay_time']
         self.target_data = {}
         self.target_time = self.og_target_time = 0
@@ -86,13 +87,12 @@ class Radeline:
 
         self.improved_lines_formatted = str(sorted([line + 1 for line in self.improved_lines]))[1:-1]
         print_and_log(f"\nFinished with {len(self.improved_lines)} optimization{'s' if len(self.improved_lines) != 1 else ''} found "
-                      f"({format_time(self.og_target_time)} -> {format_time(self.target_time)})")
+                      f"({format_time(self.og_target_time)} -> {format_time(self.target_time)}, -{self.frames_saved_total}f)")
         print_and_log(f"Lines changed: {self.improved_lines_formatted}")
 
         if settings()['exit_game_when_done']:
             print_and_log("Closing Celeste and Studio")
             psutil.Process(self.pids['studio']).kill()
-            time.sleep(settings()['loading_time_compensation'])
 
             # super ugly
             keyboard.press('`')
@@ -140,26 +140,26 @@ class Radeline:
         new_time = new_data['time']
         del new_data['time']
 
+        frames_saved = timecode_to_frames(self.target_time) - timecode_to_frames(new_time)
+        frames_lost = timecode_to_frames(new_time) - timecode_to_frames(self.target_time)
+
         # output message if it almost worked
         if new_time >= self.target_time and new_data == self.target_data:
-            print_and_log(f"Resynced but didn't save time {format_time(new_time)} >= {format_time(self.target_time)}")
-        if new_data['level'] == self.target_data['level'] and new_data != self.target_data:
-            display_data = copy.deepcopy(new_data)
-            del display_data['level']
-            print_and_log(f"Resynced but didn't get correct collectibles {display_data}")
+            print_and_log(f"Resynced but didn't save time: ({format_time(new_time)} >= {format_time(self.target_time)}, +{frames_lost}f)")
         if new_data['level'] == self.target_data['level']:
             time.sleep(settings()['loading_time_compensation'])
 
             if new_data != self.target_data:
                 display_data = copy.deepcopy(new_data)
                 del display_data['level']
-                print_and_log(f"Resynced but didn't get correct collectibles {display_data}")
+                print_and_log(f"Resynced but didn't get correct collectibles: {display_data}")
 
         # see if it worked (don't count ties, rare as they are)
         if new_time < self.target_time and new_data == self.target_data:
             self.improved_lines.append(line_num)
-            print_and_log(f"OPTIMIZATION #{len(self.improved_lines)} FOUND! {format_time(new_time)} < {format_time(self.target_time)} "
-                          f"(original was {format_time(self.og_target_time)})")
+            self.frames_saved_total = timecode_to_frames(self.og_target_time) - timecode_to_frames(new_time)
+            print_and_log(f"OPTIMIZATION #{len(self.improved_lines)} FOUND! {format_time(new_time)} < {format_time(self.target_time)}, -{frames_saved}f "
+                          f"(original was {format_time(self.og_target_time)}), -{self.frames_saved_total}f")
             self.target_time = new_time
         else:
             # revert and save
@@ -169,7 +169,7 @@ class Radeline:
         if self.paused:
             improved_lines_num = len(self.improved_lines)
             print_and_log(f"Now paused, press enter in this window to resume "
-                          f"(currently at {improved_lines_num} optimization{'s' if improved_lines_num != 1 else ''})", end=' ')
+                          f"(currently at {improved_lines_num} optimization{'s' if improved_lines_num != 1 else ''}, -{self.frames_saved_total}f)", end=' ')
             input()
             print_and_log(f"Resuming in {self.initial_delay} seconds, switch to the Celeste window\n")
             time.sleep(self.initial_delay)
@@ -261,6 +261,7 @@ def parse_save_file(save_path: str) -> dict:
 
 
 # convert the weird timecodes Celeste uses into a readable format
+@functools.lru_cache(maxsize=1)
 def format_time(timecode: int) -> str:
     timecode_str = str(timecode)
 
@@ -272,6 +273,24 @@ def format_time(timecode: int) -> str:
         return f"{minutes}:{str(seconds).rjust(2, '0')}.{str(ms).rjust(3, '0')}"
     except ValueError:
         return '0:00.000'
+
+
+# convert a Celeste timecode uses into frames
+@functools.lru_cache(maxsize=1)
+def timecode_to_frames(timecode: int) -> int:
+    timecode_str = str(timecode)
+
+    try:
+        minutes = int(int(timecode_str[:-7]) / 60)
+        seconds = int(int(timecode_str[:-7]) % 60)
+        ms = int(timecode_str[-7:-4])
+
+        out = (minutes * 3600) + (seconds * 60) + int(((ms / 1000) * 60))
+        print_and_log(f'{timecode_str=}, {minutes=}, {seconds=}, {ms=}, {out=}')
+
+        return (minutes * 3600) + (seconds * 60) + int(((ms / 1000) * 60))
+    except ValueError:
+        return 0
 
 
 def access_celeste_tas(write: list = None):
@@ -337,7 +356,7 @@ def validate_settings():
     celeste_path = settings()['celeste_path']
     bool_settings = ('exit_game_when_done', 'clear_output_log_on_startup', 'open_celeste_tas_when_done', 'extra_attempts')
     int_settings = ('extra_attempts_window_size', 'studio_cpu_consecutive')
-    num_settings = ('initial_delay_time', 'studio_cpu_threshold', 'studio_cpu_interval', 'studio_cpu_timeout')
+    num_settings = ('initial_delay_time', 'studio_cpu_threshold', 'studio_cpu_interval', 'studio_cpu_timeout', 'loading_time_compensation')
 
     # makes sure that each setting is what type it needs to be, and some other checks as well
     if not os.path.isdir(celeste_path):
