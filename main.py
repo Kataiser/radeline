@@ -159,7 +159,7 @@ class Radeline:
             self.improved_lines.append(line_num)
             self.frames_saved_total = timecode_to_frames(self.og_target_time) - timecode_to_frames(new_time)
             print_and_log(f"OPTIMIZATION #{len(self.improved_lines)} FOUND! {format_time(new_time)} < {format_time(self.target_time)}, -{frames_saved}f "
-                          f"(original was {format_time(self.og_target_time)}), -{self.frames_saved_total}f")
+                          f"(original was {format_time(self.og_target_time)}, -{self.frames_saved_total}f)")
             self.target_time = new_time
         else:
             # revert and save
@@ -222,7 +222,6 @@ class Radeline:
             cpu_usage = studio_process.cpu_percent(interval=cpu_interval)
             cpu_usage_history.append(cpu_usage)
             tas_has_finished = len([cpu for cpu in cpu_usage_history[-cpu_consecutive:] if cpu < cpu_threshold]) == cpu_consecutive
-            time.sleep(cpu_interval)
 
             if tas_has_finished or time.perf_counter() - start_time > timeout:  # just in case CPU usage based detection fails somehow
                 time.sleep(0.5)
