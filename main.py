@@ -247,6 +247,8 @@ def parse_save_file(save_path: str) -> dict:
     currentsession = soup.find('currentsession_safe')
     if currentsession is None:
         currentsession = soup.find('currentsession')
+    elif currentsession is None:
+        return {'time': 0, 'level': '', 'cassette': False, 'heartgem': False, 'total_berries': 0}
 
     parsed['time'] = int(currentsession.get('time'))
     parsed['level'] = currentsession.get('level')
@@ -283,9 +285,6 @@ def timecode_to_frames(timecode: int) -> int:
         minutes = int(int(timecode_str[:-7]) / 60)
         seconds = int(int(timecode_str[:-7]) % 60)
         ms = int(timecode_str[-7:-4])
-
-        out = (minutes * 3600) + (seconds * 60) + int(((ms / 1000) * 60))
-        print_and_log(f'{timecode_str=}, {minutes=}, {seconds=}, {ms=}, {out=}')
 
         return (minutes * 3600) + (seconds * 60) + int(((ms / 1000) * 60))
     except ValueError:
