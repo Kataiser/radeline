@@ -34,5 +34,5 @@ extra_attempts_window_size: 3
 # Don't touch unless you know what you're doing (ask Kataiser if you're having problems)
 studio_cpu_threshold: 10
 studio_cpu_interval: 0.2
-studio_cpu_consecutive: 5
+studio_cpu_consecutive: 3
 studio_cpu_timeout: 40

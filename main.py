@@ -222,6 +222,7 @@ class Radeline:
             cpu_usage = studio_process.cpu_percent(interval=cpu_interval)
             cpu_usage_history.append(cpu_usage)
             tas_has_finished = len([cpu for cpu in cpu_usage_history[-cpu_consecutive:] if cpu < cpu_threshold]) == cpu_consecutive
+            time.sleep(cpu_interval)
 
             if tas_has_finished or time.perf_counter() - start_time > timeout:  # just in case CPU usage based detection fails somehow
                 time.sleep(0.5)
