@@ -261,7 +261,7 @@ def parse_save_file(save_path: str) -> dict:
 
 
 # convert the weird timecodes Celeste uses into a readable format
-@functools.lru_cache(maxsize=1)
+@functools.lru_cache(maxsize=None)
 def format_time(timecode: int) -> str:
     timecode_str = str(timecode)
 
@@ -276,7 +276,7 @@ def format_time(timecode: int) -> str:
 
 
 # convert a Celeste timecode uses into frames
-@functools.lru_cache(maxsize=1)
+@functools.lru_cache(maxsize=None)
 def timecode_to_frames(timecode: int) -> int:
     timecode_str = str(timecode)
 
