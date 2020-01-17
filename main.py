@@ -93,24 +93,7 @@ class Radeline:
         if settings()['exit_game_when_done']:
             print_and_log("Closing Celeste and Studio")
             psutil.Process(self.pids['studio']).kill()
-
-            # super ugly
-            keyboard.press('`')
-            time.sleep(0.1)
-            keyboard.release('`')
-            keyboard.press('e')
-            time.sleep(0.1)
-            keyboard.release('e')
-            keyboard.press('tab')
-            time.sleep(0.1)
-            keyboard.release('tab')
-            time.sleep(0.1)
-            keyboard.press('tab')
-            time.sleep(0.1)
-            keyboard.release('tab')
-            keyboard.press('enter')
-            time.sleep(0.1)
-            keyboard.release('enter')
+            psutil.Process(self.pids['celeste']).kill()
 
         if settings()['open_celeste_tas_when_done'] and platform.system() == 'Windows':
             print_and_log("Opening Celeste.tas")
