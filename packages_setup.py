@@ -6,6 +6,7 @@ def main():
         import keyboard
         import lxml
         import psutil
+        import win32gui
         import yaml
         from bs4 import BeautifulSoup
     except ModuleNotFoundError:

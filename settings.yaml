@@ -30,6 +30,10 @@ open_celeste_tas_when_done: true
 extra_attempts: true
 extra_attempts_window_size: 3
 
+# Whether to wait until the Celeste window is focused, and if not, how many minutes to wait before giving up
+keep_celeste_focused: true
+focus_wait_timeout: 5
+
 # Used to track if the TAS is still running by looking at Celeste Studio's CPU usage
 # Don't touch unless you know what you're doing (ask Kataiser if you're having problems)
 studio_cpu_threshold: 10

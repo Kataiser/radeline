@@ -8,6 +8,7 @@ import time
 
 import keyboard
 import psutil
+import win32gui
 import yaml
 from bs4 import BeautifulSoup
 
@@ -37,6 +38,7 @@ class Radeline:
         print_and_log(f"Starting in {self.initial_delay} seconds, switch to the Celeste window!")
         time.sleep(self.initial_delay)
 
+        self.keep_game_focused()
         print_and_log("Getting reference data")
         self.run_tas(pauseable=False)
 
@@ -49,7 +51,7 @@ class Radeline:
             print_and_log("Target time is 0:00.000, exiting (follow the instructions in the readme)")
             raise SystemExit
 
-        print_and_log(f"Target time is {format_time(self.target_time)} with data {self.target_data}")
+        print_and_log(f"Target time is {format_time(self.target_time)} ({timecode_to_frames(self.target_time)}f) with data {self.target_data}")
         celeste_tas = access_celeste_tas()
 
         # build a list of line numbers that are valid inputs
@@ -213,10 +215,31 @@ class Radeline:
     # perform reduce_line() for a list of line numbers
     def reduce_lines(self, lines):
         for line_enum in enumerate(lines):
+            self.keep_game_focused()  # do this before everything to keep both Celeste.tas and the output clean
+
             progress = format((line_enum[0] / len(lines)) * 100, '.1f')
             print_and_log(f"({progress}%) ", end='')
 
             self.reduce_line(line_enum[1])
+
+    # if the game isn't the focused window, wait until it is or until a timeout
+    def keep_game_focused(self):
+        focused_window: str = win32gui.GetWindowText(win32gui.GetForegroundWindow())
+        if focused_window != 'Celeste':
+            print_and_log("\nCeleste is not in focus, waiting until it is...")
+            focus_wait_timeout = settings()['focus_wait_timeout']
+            wait_time_start = time.time()
+
+            while focused_window != 'Celeste':
+                focused_window: str = win32gui.GetWindowText(win32gui.GetForegroundWindow())
+                time.sleep(1)
+
+                if time.time() - wait_time_start >= focus_wait_timeout * 60:
+                    print_and_log(f"{focus_wait_timeout} minutes have elapsed, exiting")
+                    raise SystemExit
+
+            print_and_log(f"Celeste has been focused, resuming in {self.initial_delay} seconds...\n")
+            time.sleep(self.initial_delay)
 
 
 # read chapter time and current level (room) from debug.celeste
@@ -335,9 +358,9 @@ def validate_settings():
         raise SystemExit
 
     celeste_path = settings()['celeste_path']
-    bool_settings = ('exit_game_when_done', 'clear_output_log_on_startup', 'open_celeste_tas_when_done', 'extra_attempts')
+    bool_settings = ('exit_game_when_done', 'clear_output_log_on_startup', 'open_celeste_tas_when_done', 'extra_attempts', 'keep_celeste_focused')
     int_settings = ('extra_attempts_window_size', 'studio_cpu_consecutive')
-    num_settings = ('initial_delay_time', 'studio_cpu_threshold', 'studio_cpu_interval', 'studio_cpu_timeout', 'loading_time_compensation')
+    num_settings = ('initial_delay_time', 'studio_cpu_threshold', 'studio_cpu_interval', 'studio_cpu_timeout', 'loading_time_compensation', 'focus_wait_timeout')
 
     # makes sure that each setting is what type it needs to be, and some other checks as well
     if not os.path.isdir(celeste_path):
