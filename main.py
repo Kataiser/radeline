@@ -51,7 +51,7 @@ class Radeline:
             print_and_log("Target time is 0:00.000, exiting (follow the instructions in the readme)")
             raise SystemExit
 
-        print_and_log(f"Target time is {format_time(self.target_time)} ({timecode_to_frames(self.target_time)}f) with data {self.target_data}")
+        print_and_log(f"Target time is {format_time(self.target_time)} with data {self.target_data}")
         celeste_tas = access_celeste_tas()
 
         # build a list of line numbers that are valid inputs
