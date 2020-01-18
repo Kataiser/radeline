@@ -5,6 +5,7 @@ import platform
 import random
 import subprocess
 import time
+from typing import Sized, Union
 
 import keyboard
 import psutil
@@ -84,13 +85,13 @@ class Radeline:
 
             extra_lines = order_line_list(extra_lines)
 
-            print_and_log(f"\nFinished base processing, trying {len(extra_lines)} extra optimization{'s' if len(extra_lines) != 1 else ''}\n")
+            print_and_log(f"\nFinished base processing, trying {len(extra_lines)} extra optimization{pluralize(extra_lines)}\n")
             self.reduce_lines(extra_lines)
 
         self.improved_lines_formatted = str(sorted([line + 1 for line in self.improved_lines]))[1:-1]
-        print_and_log(f"\nFinished with {len(self.improved_lines)} optimization{'s' if len(self.improved_lines) != 1 else ''} found "
+        print_and_log(f"\nFinished with {len(self.improved_lines)} optimization{pluralize(self.improved_lines)} found "
                       f"({format_time(self.og_target_time)} -> {format_time(self.target_time)}, -{self.frames_saved_total}f)")
-        print_and_log(f"Lines changed: {self.improved_lines_formatted}")
+        print_and_log(f"Line{pluralize(self.improved_lines_formatted)} changed: {self.improved_lines_formatted}")
 
         if settings()['exit_game_when_done']:
             print_and_log("Closing Celeste and Studio")
@@ -154,7 +155,7 @@ class Radeline:
         if self.paused:
             improved_lines_num = len(self.improved_lines)
             print_and_log(f"Now paused, press enter in this window to resume "
-                          f"(currently at {improved_lines_num} optimization{'s' if improved_lines_num != 1 else ''}, -{self.frames_saved_total}f)", end=' ')
+                          f"(currently at {improved_lines_num} optimization{pluralize(improved_lines_num)}, -{self.frames_saved_total}f)", end=' ')
             input()
             print_and_log(f"Resuming in {self.initial_delay} seconds, switch to the Celeste window\n")
             time.sleep(self.initial_delay)
@@ -394,6 +395,13 @@ def validate_settings():
 def invalid_setting(error_message: str):
     print(f"Settings loading error: {error_message}")
     raise SystemExit
+
+
+def pluralize(count: Union[int, Sized]) -> str:
+    if isinstance(count, int):
+        return 's' if count != 1 else ''
+    else:
+        return 's' if len(count) != 1 else ''
 
 
 def print_and_log(text: str, end='\n'):
