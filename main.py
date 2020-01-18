@@ -324,11 +324,11 @@ def get_pids(silent=False) -> dict:
         elif process[0] == 'Celeste.Studio.exe':
             found_pids['studio'] = int(process[1])
 
-    if not found_pids['studio']:
-        print_and_log("\n\nCeleste Studio isn't running, exiting")
-        raise SystemExit
-    elif not found_pids['celeste']:
+    if not found_pids['celeste']:
         print_and_log("\n\nCeleste isn't running, exiting")
+        raise SystemExit
+    elif not found_pids['studio']:
+        print_and_log("\n\nCeleste Studio isn't running, exiting")
         raise SystemExit
 
     if not silent:
