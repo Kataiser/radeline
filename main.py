@@ -1,9 +1,11 @@
 import copy
 import functools
 import os
+import pickle
 import platform
 import random
 import subprocess
+import sys
 import time
 from typing import Sized, Union
 
@@ -16,7 +18,9 @@ from bs4 import BeautifulSoup
 
 class Radeline:
     def __init__(self):
-        validate_settings()
+        if sys.version_info.major + (sys.version_info.minor / 10) < 3.6:  # probably not how you're supposed to do this
+            print("Python >= 3.6 is required, exiting")
+
         self.pids = get_pids()
         self.improved_lines = []
         self.improved_lines_formatted = ''
@@ -88,6 +92,7 @@ class Radeline:
             print_and_log(f"\nFinished base processing, trying {len(extra_lines)} extra optimization{pluralize(extra_lines)}\n")
             self.reduce_lines(extra_lines)
 
+        os.remove('progress.sav')
         self.improved_lines_formatted = str(sorted([line + 1 for line in self.improved_lines]))[1:-1]
         print_and_log(f"\nFinished with {len(self.improved_lines)} optimization{pluralize(self.improved_lines)} found "
                       f"({format_time(self.og_target_time)} -> {format_time(self.target_time)}, -{self.frames_saved_total}f)")
@@ -164,6 +169,8 @@ class Radeline:
 
     # simulate keypresses to run the last debug command, run the TAS, and wait a bit
     def run_tas(self, pauseable: bool):
+        self.save_progress()
+
         if not psutil.pid_exists(self.pids['studio']):
             print_and_log("\nCeleste Studio has been closed, pausing")
             return True
@@ -191,7 +198,7 @@ class Radeline:
         keyboard.release('enter')
         time.sleep(0.5)
         keyboard.press('`')
-        time.sleep(0.1)
+        time.sleep(0.2)
         keyboard.release('`')
         keyboard.press(12)  # - (minus/hyphen)
         time.sleep(0.1)
@@ -211,6 +218,7 @@ class Radeline:
 
             if tas_has_finished or time.perf_counter() - start_time > timeout:  # just in case CPU usage based detection fails somehow
                 time.sleep(0.5)
+                self.save_progress()
                 break
 
     # perform reduce_line() for a list of line numbers
@@ -242,6 +250,10 @@ class Radeline:
             print_and_log(f"Celeste has been focused, resuming in {self.initial_delay} seconds...\n")
             time.sleep(self.initial_delay)
 
+    def save_progress(self):
+        with open('progress.sav', 'wb') as progress_file:
+            pickle.dump(self, progress_file, protocol=4)  # protocol 4 because I decided to support Python >= 3.6
+
 
 # read chapter time and current level (room) from debug.celeste
 def parse_save_file(save_path: str) -> dict:
@@ -254,7 +266,7 @@ def parse_save_file(save_path: str) -> dict:
     currentsession = soup.find('currentsession_safe')
     if currentsession is None:
         currentsession = soup.find('currentsession')
-    elif currentsession is None:
+    if currentsession is None:
         return {'time': 0, 'level': '', 'cassette': False, 'heartgem': False, 'total_berries': 0}
 
     parsed['time'] = int(currentsession.get('time'))
@@ -336,6 +348,7 @@ def get_pids(silent=False) -> dict:
     return found_pids
 
 
+# or most likely, disorder
 def order_line_list(lines: list) -> list:
     order: str = settings()['order']
 
@@ -413,12 +426,19 @@ def print_and_log(text: str, end='\n'):
 
 @functools.lru_cache(maxsize=1)
 def settings() -> dict:
+    validate_settings()
+
     with open('settings.yaml', 'r') as settings_file:
         return yaml.safe_load(settings_file)
 
 
 def main():
-    radeline = Radeline()
+    if os.path.exists('progress.sav'):
+        with open('progress.sav', 'rb') as progress_file:
+            radeline = pickle.load(progress_file)
+    else:
+        radeline = Radeline()
+
     radeline.run()
 
 
