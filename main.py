@@ -1,12 +1,12 @@
 import copy
 import functools
 import os
-import pickle
 import platform
 import random
 import subprocess
 import sys
 import time
+import traceback
 from typing import Sized, Union
 
 import keyboard
@@ -93,7 +93,6 @@ class Radeline:
             print_and_log(f"\nFinished base processing, trying {len(extra_lines)} extra optimization{pluralize(extra_lines)}\n")
             self.reduce_lines(extra_lines)
 
-        os.remove('progress.sav')
         self.improved_lines_formatted = str(sorted([line + 1 for line in self.improved_lines]))[1:-1]
         print_and_log(f"\nFinished with {len(self.improved_lines)} optimization{pluralize(self.improved_lines)} found "
                       f"({format_time(self.og_target_time)} -> {format_time(self.target_time)}, -{self.frames_saved_total}f)")
@@ -170,8 +169,6 @@ class Radeline:
 
     # simulate keypresses to run the last debug command, run the TAS, and wait a bit
     def run_tas(self, pauseable: bool):
-        self.save_progress()
-
         if not psutil.pid_exists(self.pids['studio']):
             print_and_log("\nCeleste Studio has been closed, pausing")
             return True
@@ -219,7 +216,6 @@ class Radeline:
 
             if tas_has_finished or time.perf_counter() - start_time > timeout:  # just in case CPU usage based detection fails somehow
                 time.sleep(0.5)
-                self.save_progress()
                 break
 
     # perform reduce_line() for a list of line numbers
@@ -250,11 +246,6 @@ class Radeline:
 
             print_and_log(f"Celeste has been focused, resuming in {self.initial_delay} seconds...\n")
             time.sleep(self.initial_delay)
-
-    def save_progress(self):
-        # with open('progress.sav', 'wb') as progress_file:
-        #     pickle.dump(self, progress_file, protocol=4)  # protocol 4 because I decided to support Python >= 3.6
-        pass
 
 
 # read chapter time and current level (room) from debug.celeste
@@ -433,13 +424,11 @@ def settings() -> dict:
 
 
 def main():
-    if os.path.exists('progress.sav'):
-        with open('progress.sav', 'rb') as progress_file:
-            radeline = pickle.load(progress_file)
-    else:
+    try:
         radeline = Radeline()
-
-    radeline.run()
+        radeline.run()
+    except Exception:
+        print_and_log(traceback.format_exc())
 
 
 if __name__ == '__main__':
