@@ -21,6 +21,7 @@ class Radeline:
         if sys.version_info.major + (sys.version_info.minor / 10) < 3.6:  # probably not how you're supposed to do this
             print("Python >= 3.6 is required, exiting")
 
+        validate_settings()
         self.pids = get_pids()
         self.improved_lines = []
         self.improved_lines_formatted = ''
@@ -198,7 +199,7 @@ class Radeline:
         keyboard.release('enter')
         time.sleep(0.5)
         keyboard.press('`')
-        time.sleep(0.2)
+        time.sleep(0.5)
         keyboard.release('`')
         keyboard.press(12)  # - (minus/hyphen)
         time.sleep(0.1)
@@ -251,8 +252,9 @@ class Radeline:
             time.sleep(self.initial_delay)
 
     def save_progress(self):
-        with open('progress.sav', 'wb') as progress_file:
-            pickle.dump(self, progress_file, protocol=4)  # protocol 4 because I decided to support Python >= 3.6
+        # with open('progress.sav', 'wb') as progress_file:
+        #     pickle.dump(self, progress_file, protocol=4)  # protocol 4 because I decided to support Python >= 3.6
+        pass
 
 
 # read chapter time and current level (room) from debug.celeste
@@ -426,8 +428,6 @@ def print_and_log(text: str, end='\n'):
 
 @functools.lru_cache(maxsize=1)
 def settings() -> dict:
-    validate_settings()
-
     with open('settings.yaml', 'r') as settings_file:
         return yaml.safe_load(settings_file)
 
