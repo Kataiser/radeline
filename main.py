@@ -223,10 +223,13 @@ class Radeline:
         for line_enum in enumerate(lines):
             self.keep_game_focused()  # do this before everything to keep both Celeste.tas and the output clean
 
-            progress = format((line_enum[0] / len(lines)) * 100, '.1f')
-            print_and_log(f"({progress}%) ", end='')
+            if line_enum[1].lstrip().startswith('0'):
+                print_and_log(f"Skipping line {line_enum[0]} ({line_enum[1]})")
+            else:
+                progress = format((line_enum[0] / len(lines)) * 100, '.1f')
+                print_and_log(f"({progress}%) ", end='')
 
-            self.reduce_line(line_enum[1])
+                self.reduce_line(line_enum[1])
 
     # if the game isn't the focused window, wait until it is or until a timeout
     def keep_game_focused(self):
@@ -346,8 +349,9 @@ def order_line_list(lines: list) -> list:
     order: str = settings()['order']
 
     if order == 'forward':
-        return lines
+        lines.sort()
     elif order == 'reverse':
+        lines.sort()
         lines.reverse()
     elif order == 'random':
         random.shuffle(lines)
