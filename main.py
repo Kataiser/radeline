@@ -224,9 +224,9 @@ class Radeline:
             self.keep_game_focused()  # do this before everything to keep both Celeste.tas and the output clean
 
             progress = format((line_enum[0] / len(lines)) * 100, '.1f')
-			print_and_log(f"({progress}%) ", end='')
+            print_and_log(f"({progress}%) ", end='')
 
-			self.reduce_line(line_enum[1])
+            self.reduce_line(line_enum[1])
 
     # if the game isn't the focused window, wait until it is or until a timeout
     def keep_game_focused(self):
@@ -239,10 +239,6 @@ class Radeline:
             while focused_window != 'Celeste':
                 focused_window: str = win32gui.GetWindowText(win32gui.GetForegroundWindow())
                 time.sleep(1)
-
-                if time.time() - wait_time_start >= focus_wait_timeout * 60:
-                    print_and_log(f"{focus_wait_timeout} minutes have elapsed, exiting")
-                    raise SystemExit
 
             print_and_log(f"Celeste has been focused, resuming in {self.initial_delay} seconds...\n")
             time.sleep(self.initial_delay)
