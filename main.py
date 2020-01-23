@@ -78,7 +78,7 @@ class Radeline:
         time.sleep(settings()['loading_time_compensation'])
         self.reduce_lines(valid_line_nums)
 
-        # do extra attemps for modified lines and a few neighbors
+        # do extra attempts for modified lines and a few neighbors
         if settings()['extra_attempts'] and self.improved_lines:
             extra_lines = []
             window = settings()['extra_attempts_window_size']
@@ -223,13 +223,10 @@ class Radeline:
         for line_enum in enumerate(lines):
             self.keep_game_focused()  # do this before everything to keep both Celeste.tas and the output clean
 
-            if line_enum[1].lstrip().startswith('0'):
-                print_and_log(f"Skipping line {line_enum[0]} ({line_enum[1]})")
-            else:
-                progress = format((line_enum[0] / len(lines)) * 100, '.1f')
-                print_and_log(f"({progress}%) ", end='')
+            progress = format((line_enum[0] / len(lines)) * 100, '.1f')
+			print_and_log(f"({progress}%) ", end='')
 
-                self.reduce_line(line_enum[1])
+			self.reduce_line(line_enum[1])
 
     # if the game isn't the focused window, wait until it is or until a timeout
     def keep_game_focused(self):
