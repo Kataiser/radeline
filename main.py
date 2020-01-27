@@ -66,7 +66,7 @@ class Radeline:
             if input_file_trims[0] < possible_line[0] < (len(celeste_tas) - input_file_trims[1]):
                 line = possible_line[1]
 
-                if '#' not in line and 'Read' not in line and ',' in line:
+                if '#' not in line and 'Read' not in line and ',' in line and not line.lstrip().startswith('0,'):
                     valid_line_nums.append(possible_line[0])
 
         valid_line_nums = order_line_list(valid_line_nums)
@@ -131,8 +131,8 @@ class Radeline:
         new_time = new_data['time']
         del new_data['time']
 
-        frames_saved = timecode_to_frames(self.target_time) - timecode_to_frames(new_time)
-        frames_lost = timecode_to_frames(new_time) - timecode_to_frames(self.target_time)
+        frames_saved = compare_timecode_frames(self.target_time, new_time)
+        frames_lost = compare_timecode_frames(new_time, self.target_time)
 
         # output message if it almost worked
         if new_time >= self.target_time and new_data == self.target_data:
@@ -148,7 +148,7 @@ class Radeline:
         # see if it worked (don't count ties, rare as they are)
         if new_time < self.target_time and new_data == self.target_data:
             self.improved_lines.append(line_num)
-            self.frames_saved_total = timecode_to_frames(self.og_target_time) - timecode_to_frames(new_time)
+            self.frames_saved_total = compare_timecode_frames(self.og_target_time, new_time)
             print_and_log(f"OPTIMIZATION #{len(self.improved_lines)} FOUND! {format_time(new_time)} < {format_time(self.target_time)}, -{frames_saved}f "
                           f"(original was {format_time(self.og_target_time)}, -{self.frames_saved_total}f)")
             self.target_time = new_time
@@ -284,19 +284,15 @@ def format_time(timecode: int) -> str:
         return '0:00.000'
 
 
-# convert a Celeste timecode uses into frames
+# find the difference between two timecodes, in frames (note the subtraction order)
 @functools.lru_cache(maxsize=None)
-def timecode_to_frames(timecode: int) -> int:
-    timecode_str = str(timecode)
-
-    try:
-        minutes = int(int(timecode_str[:-7]) / 60)
-        seconds = int(int(timecode_str[:-7]) % 60)
-        ms = int(timecode_str[-7:-4])
-
-        return (minutes * 3600) + (seconds * 60) + int(((ms / 1000) * 60))
-    except ValueError:
+def compare_timecode_frames(timecode_1: int, timecode_2: int) -> int:
+    if timecode_1 == timecode_2:
         return 0
+    else:
+        ms_1 = int(str(timecode_1)[-7:-4])
+        ms_2 = int(str(timecode_2)[-7:-4])
+        return round((ms_1 - ms_2) / 16.67)
 
 
 def access_celeste_tas(write: list = None):
