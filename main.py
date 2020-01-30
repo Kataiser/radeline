@@ -284,15 +284,22 @@ def format_time(timecode: int) -> str:
         return '0:00.000'
 
 
-# find the difference between two timecodes, in frames (note the subtraction order)
+# find the difference between two timecodes, in frames (timecode_1 - timecode_2, assumes < 1 second diff)
 @functools.lru_cache(maxsize=None)
 def compare_timecode_frames(timecode_1: int, timecode_2: int) -> int:
     if timecode_1 == timecode_2:
         return 0
     else:
+        seconds_1 = int(int(str(timecode_1)[:-7]) % 60)
+        seconds_2 = int(int(str(timecode_2)[:-7]) % 60)
+    
         ms_1 = int(str(timecode_1)[-7:-4])
         ms_2 = int(str(timecode_2)[-7:-4])
-        return round((ms_1 - ms_2) / 16.67)
+        
+        if seconds_1 == seconds_2:
+            return round((ms_1 - ms_2) / 16.67)
+        else:
+            return round(ms_1 / 16.67) + round((1000 - ms_2) / 16.67)
 
 
 def access_celeste_tas(write: list = None):
