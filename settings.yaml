@@ -1,6 +1,5 @@
 ---
 celeste_path: C:\Program Files (x86)\Steam\steamapps\common\Celeste
-exit_game_when_done: true
 clear_output_log_on_startup: true
 
 # How many lines to trim off the start and end respectively of Celeste.tas
@@ -20,24 +19,29 @@ pause_key: "0"  # That's zero
 # Can be forward, reverse, or random
 order: random
 
+# whether the TAS file uses console load to start, or restart chapter
+console_load_mode: false
+
 # Everest has a delay when loading level complete screen textures for custom maps,
 # so wait this many seconds for that (5 is recommended)
 loading_time_compensation: 0
+
+# Also closes Studio
+exit_game_when_done: true
 
 # Make sure that .tas files are assigned to a text editor (Windows only)
 open_celeste_tas_when_done: true
 
 # Do some extra optimization attempts when done
 extra_attempts: true
-extra_attempts_window_size: 3
+extra_attempts_window_size: 5
 
 # Whether to wait until the Celeste window is focused, and if not, how many minutes to wait before giving up
 keep_celeste_focused: true
-focus_wait_timeout: 5
+focus_wait_timeout: 3
 
-# Used to track if the TAS is still running by looking at Celeste Studio's CPU usage
+# Used to track if the TAS is still running, using Everest's DebugRC server
 # Don't touch unless you know what you're doing (ask Kataiser if you're having problems)
-studio_cpu_threshold: 10
-studio_cpu_interval: 0.2
-studio_cpu_consecutive: 5
-studio_cpu_timeout: 40
+session_consecutive: 2
+session_interval: 0.5
+session_timeout: 40

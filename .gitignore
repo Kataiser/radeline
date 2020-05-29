@@ -2,3 +2,7 @@ output_log.txt
 /.idea
 *.lnk
 run_custom.bat
+build/
+RADeline.c
+RADeline.cp38-win32.pyd
+RADeline.html
