@@ -149,12 +149,12 @@ class Radeline:
         # output message if it almost worked
         if new_time >= self.target_time and new_data == self.target_data:
             print(f"Resynced but didn't save time: ({format_time(new_time)} >= {format_time(self.target_time)}, +{frames_lost}f)")
-        if new_data['level'] == self.target_data['level']:
+        if new_data['room'] == self.target_data['room']:
             time.sleep(settings()['loading_time_compensation'])
 
             if new_data != self.target_data:
                 display_data = copy.deepcopy(new_data)
-                del display_data['level']
+                del display_data['room']
                 print(f"Resynced but didn't get correct collectibles: {display_data}")
 
         # see if it worked (don't count ties)
