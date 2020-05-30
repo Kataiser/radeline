@@ -6,3 +6,5 @@ build/
 RADeline.c
 RADeline.cp38-win32.pyd
 RADeline.html
+.mypy_cache
+mypy.bat

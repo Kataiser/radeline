@@ -9,7 +9,7 @@ import subprocess
 import sys
 import time
 import traceback
-from typing import Any, Dict, List, Sized, Tuple, Union
+from typing import Any, Dict, List, Sized, TextIO, Tuple, Union
 
 import keyboard
 import psutil
@@ -33,15 +33,15 @@ class Radeline:
         self.initial_delay: Union[int, float] = settings()['initial_delay_time']
         self.target_data: dict = {}
         self.target_time: int = 0
-        self.target_time: int = 0
+        self.og_target_time: int = 0
         self.paused: bool = False
         self.pause_key_code: int = keyboard.key_to_scan_codes(settings()['pause_key'])[0]
 
     def run(self):
-        pause_key = settings()['pause_key']
-        input_file_trims = settings()['input_file_trims']
+        pause_key: str = settings()['pause_key']
+        input_file_trims: List[int] = settings()['input_file_trims']
 
-        celeste_tas = access_celeste_tas()
+        celeste_tas: List[str] = access_celeste_tas()
         if celeste_tas[-1] != '***':
             print("Celeste.tas doesn't have end with a breakpoint (***), exiting")
             raise SystemExit
@@ -65,7 +65,7 @@ class Radeline:
         print(f"Target time is {format_time(self.target_time)} with data {self.target_data}")
 
         # build a list of line numbers that are valid inputs
-        valid_line_nums = []
+        valid_line_nums: List[int] = []
         for possible_line in enumerate(celeste_tas):
             if input_file_trims[0] < possible_line[0] < (len(celeste_tas) - input_file_trims[1]):
                 line = possible_line[1]
@@ -76,7 +76,7 @@ class Radeline:
         valid_line_nums = order_line_list(valid_line_nums)
 
         print(f"Beginning optimization of Celeste.tas ({len(celeste_tas)} lines, {len(valid_line_nums)} inputs)\n"
-                      f"Press {pause_key} to pause, and make sure to keep the Celeste window focused\n")
+              f"Press {pause_key} to pause, and make sure to keep the Celeste window focused\n")
 
         # perform the main operation
         time.sleep(settings()['loading_time_compensation'])
@@ -84,8 +84,8 @@ class Radeline:
 
         # do extra attempts for modified lines and a few neighbors
         if settings()['extra_attempts'] and self.improved_lines:
-            extra_lines = []
-            window = settings()['extra_attempts_window_size']
+            extra_lines: List[int] = []
+            window: int = settings()['extra_attempts_window_size']
 
             for line_num in self.improved_lines:
                 for extra_line in range(line_num - window + 1, line_num + window):
@@ -99,7 +99,7 @@ class Radeline:
 
         self.improved_lines_formatted = str(sorted([line + 1 for line in self.improved_lines]))[1:-1]
         print(f"\nFinished with {len(self.improved_lines)} optimization{pluralize(self.improved_lines)} found "
-                      f"({format_time(self.og_target_time)} -> {format_time(self.target_time)}, -{self.frames_saved_total}f)")
+              f"({format_time(self.og_target_time)} -> {format_time(self.target_time)}, -{self.frames_saved_total}f)")
 
         if self.improved_lines_formatted:
             print(f"Line{pluralize(self.improved_lines)} changed: {self.improved_lines_formatted}")
@@ -118,7 +118,7 @@ class Radeline:
     # subtract 1 from a line and test if that helped, reverting if it didn't
     def reduce_line(self, line_num: int):
         # load this each time because it may have changed
-        celeste_tas = access_celeste_tas()
+        celeste_tas: List[str] = access_celeste_tas()
 
         # split the line apart, subtract 1 from the frame number, and rebuild it
         original_line: str = celeste_tas[line_num]
@@ -135,13 +135,13 @@ class Radeline:
 
         # run with the changed line
         self.run_tas(pauseable=True)
-        new_data = parse_save_file()
+        new_data: dict = parse_save_file()
         new_time: int = new_data['time']
         del new_data['time']
 
         if new_time == 0:
-            frames_saved = None
-            frames_lost = None
+            frames_saved: Union[int, None] = None
+            frames_lost: Union[int, None] = None
         else:
             frames_saved = compare_timecode_frames(self.target_time, new_time)
             frames_lost = compare_timecode_frames(new_time, self.target_time)
@@ -153,7 +153,7 @@ class Radeline:
             time.sleep(settings()['loading_time_compensation'])
 
             if new_data != self.target_data:
-                display_data = copy.deepcopy(new_data)
+                display_data: dict = copy.deepcopy(new_data)
                 del display_data['room']
                 print(f"Resynced but didn't get correct collectibles: {display_data}")
 
@@ -162,7 +162,7 @@ class Radeline:
             self.improved_lines.append(line_num)
             self.frames_saved_total = compare_timecode_frames(self.og_target_time, new_time)
             print(f"OPTIMIZATION #{len(self.improved_lines)} FOUND! {format_time(new_time)} < {format_time(self.target_time)}, -{frames_saved}f "
-                          f"(original was {format_time(self.og_target_time)}, -{self.frames_saved_total}f)")
+                  f"(original was {format_time(self.og_target_time)}, -{self.frames_saved_total}f)")
             self.target_time = new_time
         else:
             # revert and save
@@ -172,7 +172,7 @@ class Radeline:
         if self.paused:
             improved_lines_num = len(self.improved_lines)
             print(f"Now paused, press enter in this window to resume "
-                          f"(currently at {improved_lines_num} optimization{pluralize(improved_lines_num)}, -{self.frames_saved_total}f)", end=' ')
+                  f"(currently at {improved_lines_num} optimization{pluralize(improved_lines_num)}, -{self.frames_saved_total}f)", end=' ')
             input()
             print(f"Resuming in {self.initial_delay} seconds, switch to the Celeste window\n")
             time.sleep(self.initial_delay)
@@ -232,11 +232,11 @@ class Radeline:
                 break
 
     # perform reduce_line() for a list of line numbers
-    def reduce_lines(self, lines):
+    def reduce_lines(self, lines: List[int]):
         for line_enum in enumerate(lines):
             self.keep_game_focused()  # do this before everything to keep both Celeste.tas and the output clean
 
-            progress = format((line_enum[0] / (len(lines) - 1)) * 100, '.1f')
+            progress: str = format((line_enum[0] / (len(lines) - 1)) * 100, '.1f')
             print(f"({progress}%) ", end='')
 
             self.reduce_line(line_enum[1])
@@ -261,8 +261,8 @@ def parse_save_file() -> dict:
     with open(os.path.join(settings()['celeste_path'], 'saves', 'debug.celeste'), 'r') as save_file:
         save_file_read = save_file.read()
 
-    parsed = {}
-    soup = BeautifulSoup(save_file_read, 'lxml')
+    parsed: dict = {}
+    soup: BeautifulSoup = BeautifulSoup(save_file_read, 'lxml')
 
     currentsession = soup.find('currentsession_safe')
     if currentsession is None:
@@ -285,12 +285,12 @@ def parse_save_file() -> dict:
 # convert the weird timecodes Celeste uses into a readable format
 @functools.lru_cache(maxsize=None)
 def format_time(timecode: int) -> str:
-    timecode_str = str(timecode)
+    timecode_str: str = str(timecode)
 
     try:
-        minutes = int(int(timecode_str[:-7]) / 60)
-        seconds = int(int(timecode_str[:-7]) % 60)
-        ms = int(timecode_str[-7:-4])
+        minutes: int = int(int(timecode_str[:-7]) / 60)
+        seconds: int = int(int(timecode_str[:-7]) % 60)
+        ms: int = int(timecode_str[-7:-4])
 
         return f"{minutes}:{str(seconds).rjust(2, '0')}.{str(ms).rjust(3, '0')}"
     except ValueError:
@@ -303,11 +303,11 @@ def compare_timecode_frames(timecode_1: int, timecode_2: int) -> int:
     if timecode_1 == timecode_2:
         return 0
     else:
-        seconds_1 = int(int(str(timecode_1)[:-7]) % 60)
-        seconds_2 = int(int(str(timecode_2)[:-7]) % 60)
+        seconds_1: int = int(int(str(timecode_1)[:-7]) % 60)
+        seconds_2: int = int(int(str(timecode_2)[:-7]) % 60)
 
-        ms_1 = int(str(timecode_1)[-7:-4])
-        ms_2 = int(str(timecode_2)[-7:-4])
+        ms_1: int = int(str(timecode_1)[-7:-4])
+        ms_2: int = int(str(timecode_2)[-7:-4])
 
         if seconds_1 == seconds_2:
             return round((ms_1 - ms_2) / 17)
@@ -324,17 +324,17 @@ def access_celeste_tas(write: List[str] = None):
 
 
 # get the process IDs for Celeste and Studio
-def get_pids(silent=False, init=False) -> Dict[str, Union[int, None]]:
+def get_pids(silent: bool = False, init: bool = False) -> Dict[str, Union[int, None]]:
     found_pids: Dict[str, Union[int, None]] = {'celeste': None, 'studio': None}
 
     # https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/tasklist
     try:
-        processes = str(subprocess.check_output('tasklist /fi "STATUS eq running"')).split(r'\r\n')
+        processes: List[str] = str(subprocess.check_output('tasklist /fi "STATUS eq running"')).split(r'\r\n')
     except subprocess.CalledProcessError:
         processes = []
 
     for process_line in processes:
-        process = process_line.split()
+        process: List[str] = process_line.split()
 
         if process[0] == 'Celeste.exe':
             found_pids['celeste'] = int(process[1])
@@ -353,6 +353,7 @@ def get_pids(silent=False, init=False) -> Dict[str, Union[int, None]]:
             print("Found Celeste.exe and Celeste.Studio.exe")
         else:
             print("Found Celeste.exe")
+
     return found_pids
 
 
@@ -376,11 +377,11 @@ def validate_settings():
     try:
         settings()
     except yaml.YAMLError as error:
-        error_tabbed = str(error).replace('\n', '\n    ')
+        error_tabbed: str = str(error).replace('\n', '\n    ')
         print(f"Couldn't parse settings:\n    {error_tabbed}")
         raise SystemExit
 
-    celeste_path = settings()['celeste_path']
+    celeste_path: str = str(settings()['celeste_path'])
     bool_settings = ('exit_game_when_done', 'clear_output_log_on_startup', 'open_celeste_tas_when_done', 'extra_attempts', 'keep_celeste_focused', 'console_load_mode')
     int_settings = ('extra_attempts_window_size', 'session_consecutive')
     num_settings = ('initial_delay_time', 'loading_time_compensation', 'focus_wait_timeout', 'session_timeout', 'session_interval')  # int or float
@@ -429,8 +430,7 @@ def pluralize(count: Union[int, Sized]) -> str:
 @functools.lru_cache(maxsize=1)
 def settings() -> Dict[str, Any]:
     with open('settings.yaml', 'r') as settings_file:
-        settings_loaded = yaml.safe_load(settings_file)
-        return settings_loaded
+        return yaml.safe_load(settings_file)
 
 
 # log all prints to a file
@@ -439,8 +439,8 @@ class Logger(object):
         if settings()['clear_output_log_on_startup'] and os.path.isfile('output_log.txt'):
             os.remove('output_log.txt')
 
-        self.terminal = sys.stdout
-        self.log = open('output_log.txt', 'a')
+        self.terminal: TextIO = sys.stdout
+        self.log: TextIO = open('output_log.txt', 'a')
 
     def write(self, message):
         self.terminal.write(message)
