@@ -6,7 +6,7 @@ Chaos monkey that optimizes the [Celeste TAS](https://github.com/ShootMe/Celeste
 ## Instructions
 1. Change `KeyStart` in `Saves\modsettings-CelesteTAS.celeste` to `- OemMinus`, because I couldn't get the default bind to work
 2. Make sure the inputs in Celeste.tas have a breakpoint on the very last line, a chapter restart at the beginning, and end on the chapter complete screen (or a S&Q)
-3. If you're not using the console load start method, make sure the most recently run command in Celeste is the correct chapter load (ex. `load 4` or `rmx2 7`)
+3. If you're not using the `console load` start method, make sure the most recently run command in Celeste is the correct chapter load (ex. `load 4` or `rmx2 7`)
 4. Take a look at `settings.yaml` and make sure it's configured correctly
 5. Be careful with Celeste Studio because it doesn't read Radeline's changes to Celeste.tas and so you could easily accidentally overwrite it
 6. Install Python >= 3.6 (with pip and "Add python to environment variables" checked)
