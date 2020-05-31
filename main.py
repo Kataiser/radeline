@@ -65,9 +65,18 @@ class Radeline:
         print(f"Target time is {format_time(self.target_time)} with data {self.target_data}")
 
         # build a list of line numbers that are valid inputs
+        if settings()['auto_trim']:
+            celeste_tas_joined: str = ''.join(celeste_tas)
+
+            if '#Start' in celeste_tas_joined:
+                celeste_tas = ''.join(celeste_tas_joined.split('#Start')[1].split('\n\n')[:-1]).split('\n')  # good code, gamers
+            else:
+                print("Couldn't find \"#Start\" in Celeste.tas, using input_file_trims instead of auto trimming")
+
         valid_line_nums: List[int] = []
+
         for possible_line in enumerate(celeste_tas):
-            if input_file_trims[0] < possible_line[0] < (len(celeste_tas) - input_file_trims[1]):
+            if input_file_trims[0] < possible_line[0] < (len(celeste_tas) - input_file_trims[1]) or settings()['auto_trim']:
                 line = possible_line[1]
 
                 if '#' not in line and 'Read' not in line and ',' in line and not line.lstrip().startswith('0,'):
@@ -386,7 +395,7 @@ def validate_settings():
 
     celeste_path: str = str(settings()['celeste_path'])
     bool_settings = ('exit_game_when_done', 'clear_output_log_on_startup', 'open_celeste_tas_when_done', 'extra_attempts', 'keep_celeste_focused',
-                     'console_load_mode', 'ensure_breakpoint_end')
+                     'console_load_mode', 'ensure_breakpoint_end', 'auto_trim')
     int_settings = ('extra_attempts_window_size', 'session_consecutive')
     num_settings = ('initial_delay_time', 'loading_time_compensation', 'focus_wait_timeout', 'session_timeout', 'session_interval')  # int or float
 
@@ -449,6 +458,7 @@ class Logger(object):
     def write(self, message):
         self.terminal.write(message)
         self.log.write(message)
+        self.log.flush()
 
     def flush(self):
         pass
