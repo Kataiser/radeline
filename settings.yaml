@@ -1,6 +1,7 @@
 ---
 celeste_path: C:\Program Files (x86)\Steam\steamapps\common\Celeste
 clear_output_log_on_startup: true
+ensure_breakpoint_end: true
 
 # How many lines to trim off the start and end respectively of Celeste.tas
 # Useful for ignoring chapter restarts, S&Qs, getting to the chapter complete screen, etc.
@@ -26,7 +27,7 @@ console_load_mode: false
 # so wait this many seconds for that (5 is recommended)
 loading_time_compensation: 0
 
-# Also closes Studio
+# Also closes Studio if it's open
 exit_game_when_done: true
 
 # Make sure that .tas files are assigned to a text editor (Windows only)
@@ -42,6 +43,6 @@ focus_wait_timeout: 3
 
 # Used to track if the TAS is still running, using Everest's DebugRC server
 # Don't touch unless you know what you're doing (ask Kataiser if you're having problems)
-session_consecutive: 2
+session_consecutive: 3
 session_interval: 0.5
 session_timeout: 40

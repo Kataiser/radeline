@@ -42,8 +42,8 @@ class Radeline:
         input_file_trims: List[int] = settings()['input_file_trims']
 
         celeste_tas: List[str] = access_celeste_tas()
-        if celeste_tas[-1] != '***':
-            print("Celeste.tas doesn't have end with a breakpoint (***), exiting")
+        if settings()['ensure_breakpoint_end'] and celeste_tas[-1] != '***':
+            print("Celeste.tas doesn't end with a breakpoint (***), exiting")
             raise SystemExit
 
         print(f"Starting in {self.initial_delay} seconds, switch to the Celeste window!")
@@ -105,11 +105,13 @@ class Radeline:
             print(f"Line{pluralize(self.improved_lines)} changed: {self.improved_lines_formatted}")
 
         if settings()['exit_game_when_done']:
-            print("Closing Celeste and Studio")
             psutil.Process(self.pids['celeste']).kill()
 
-            if self.pids['studio']:
+            try:
                 psutil.Process(self.pids['studio']).kill()
+                print("Closed Celeste and Studio")
+            except psutil.NoSuchProcess:
+                print("Closed Celeste")
 
         if settings()['open_celeste_tas_when_done'] and platform.system() == 'Windows':
             print("Opening Celeste.tas")
@@ -172,10 +174,11 @@ class Radeline:
         if self.paused:
             improved_lines_num = len(self.improved_lines)
             print(f"Now paused, press enter in this window to resume "
-                  f"(currently at {improved_lines_num} optimization{pluralize(improved_lines_num)}, -{self.frames_saved_total}f)", end=' ')
+                  f"(currently at {improved_lines_num} optimization{pluralize(improved_lines_num)}, -{self.frames_saved_total}f)")
             input()
             print(f"Resuming in {self.initial_delay} seconds, switch to the Celeste window\n")
             time.sleep(self.initial_delay)
+
             settings.cache_clear()  # reload settings file
             validate_settings()
             self.pids = get_pids(silent=True)
@@ -338,7 +341,7 @@ def get_pids(silent: bool = False, init: bool = False) -> Dict[str, Union[int, N
 
         if process[0] == 'Celeste.exe':
             found_pids['celeste'] = int(process[1])
-        elif process[0] == 'Celeste.Studio.exe':
+        elif 'studio' in process[0].lower() and 'celeste' in process[0].lower():
             found_pids['studio'] = int(process[1])
 
     if not found_pids['celeste']:
@@ -382,7 +385,8 @@ def validate_settings():
         raise SystemExit
 
     celeste_path: str = str(settings()['celeste_path'])
-    bool_settings = ('exit_game_when_done', 'clear_output_log_on_startup', 'open_celeste_tas_when_done', 'extra_attempts', 'keep_celeste_focused', 'console_load_mode')
+    bool_settings = ('exit_game_when_done', 'clear_output_log_on_startup', 'open_celeste_tas_when_done', 'extra_attempts', 'keep_celeste_focused',
+                     'console_load_mode', 'ensure_breakpoint_end')
     int_settings = ('extra_attempts_window_size', 'session_consecutive')
     num_settings = ('initial_delay_time', 'loading_time_compensation', 'focus_wait_timeout', 'session_timeout', 'session_interval')  # int or float
 
