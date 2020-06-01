@@ -280,7 +280,7 @@ def parse_save_file() -> dict:
     if currentsession is None:
         currentsession = soup.find('currentsession')
     if currentsession is None:
-        return {'time': 0, 'room': '', 'cassette': False, 'heart': False, 'berries': 0, 'keys': 0}
+        print("Couldn't find a CurrentSession tag in debug.celeste, guess the game broke? IDK, exiting anyway")
 
     parsed['time'] = int(currentsession.get('time'))
     parsed['room'] = currentsession.get('level')
