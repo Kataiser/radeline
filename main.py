@@ -69,9 +69,13 @@ class Radeline:
             celeste_tas_joined: str = ''.join(celeste_tas)
 
             if '#Start' in celeste_tas_joined:
-                celeste_tas = ''.join(celeste_tas_joined.split('#Start')[1].split('\n\n')[:-1]).split('\n')  # good code, gamers
+                celeste_tas = '\n\n'.join(celeste_tas_joined.split('\n\n')[:-1]).split('\n')  # good code, gamers
+                start_line_index: int = celeste_tas.index('#Start')
             else:
                 print("Couldn't find \"#Start\" in Celeste.tas, using input_file_trims instead of auto trimming")
+                start_line_index = 0
+        else:
+            start_line_index = 0
 
         valid_line_nums: List[int] = []
 
@@ -79,7 +83,7 @@ class Radeline:
             if input_file_trims[0] < possible_line[0] < (len(celeste_tas) - input_file_trims[1]) or settings()['auto_trim']:
                 line = possible_line[1]
 
-                if '#' not in line and 'Read' not in line and ',' in line and not line.lstrip().startswith('0,'):
+                if '#' not in line and 'Read' not in line and ',' in line and not line.lstrip().startswith('0,') and (settings()['auto_trim'] and possible_line[0] > start_line_index):
                     valid_line_nums.append(possible_line[0])
 
         valid_line_nums = order_line_list(valid_line_nums)
