@@ -5,6 +5,7 @@ ensure_breakpoint_end: true
 
 # How many lines to trim off the start and end respectively of Celeste.tas
 # Useful for ignoring chapter restarts, S&Qs, getting to the chapter complete screen, etc.
+# Note that this doesn't actually edit the file, just what Radeline uses
 input_file_trims:
   - 7
   - 1

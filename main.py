@@ -42,6 +42,7 @@ class Radeline:
         input_file_trims: List[int] = settings()['input_file_trims']
 
         celeste_tas: List[str] = access_celeste_tas()
+        celeste_tas_len: int = len(celeste_tas)  # keep the original length in case auto trim changes it
         if settings()['ensure_breakpoint_end'] and celeste_tas[-1] != '***':
             print("Celeste.tas doesn't end with a breakpoint (***), exiting")
             raise SystemExit
@@ -86,12 +87,16 @@ class Radeline:
                 if '#' not in line and 'Read' not in line and ',' in line and not line.lstrip().startswith('0,') and (settings()['auto_trim'] and possible_line[0] > start_line_index):
                     valid_line_nums.append(possible_line[0])
 
+        if settings()['auto_trim']:
+            print(f"Auto trimmed Celeste.tas to lines {valid_line_nums[0]}-{valid_line_nums[-1] + 2}")
+        else:
+            print(f"Trimmed Celeste.tas to lines {input_file_trims[0] + 1}-{celeste_tas_len - input_file_trims[1]}")
+
         valid_line_nums = order_line_list(valid_line_nums)
 
-        print(f"Beginning optimization of Celeste.tas ({len(celeste_tas)} lines, {len(valid_line_nums)} inputs)\n"
-              f"Press {pause_key} to pause, and make sure to keep the Celeste window focused\n")
-
         # perform the main operation
+        print(f"Beginning optimization of Celeste.tas ({celeste_tas_len} lines, {len(valid_line_nums)} inputs)\n"
+              f"Press {pause_key} to pause, and make sure to keep the Celeste window focused\n")
         time.sleep(settings()['loading_time_compensation'])
         self.reduce_lines(valid_line_nums)
 
