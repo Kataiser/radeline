@@ -47,6 +47,35 @@ class Radeline:
             print("Celeste.tas doesn't end with a breakpoint (***), exiting")
             raise SystemExit
 
+        # build a list of line numbers that are valid inputs
+        if settings()['auto_trim']:
+            celeste_tas_joined: str = ''.join(celeste_tas)
+
+            if '#Start' in celeste_tas_joined:
+                celeste_tas = '\n\n'.join(celeste_tas_joined.split('\n\n')[:-1]).split('\n')  # good code, gamers
+                start_line_index: int = celeste_tas.index('#Start')
+            else:
+                print("Couldn't find \"#Start\" in Celeste.tas, using input_file_trims instead of auto trimming")
+                start_line_index = 0
+        else:
+            start_line_index = 0
+
+        valid_line_nums: List[int] = []
+
+        for possible_line in enumerate(celeste_tas):
+            if input_file_trims[0] <= possible_line[0] < (len(celeste_tas) - input_file_trims[1]) or settings()['auto_trim']:
+                line = possible_line[1]
+
+                if '#' not in line and 'Read' not in line and ',' in line and not line.lstrip().startswith('0,') and possible_line[0] > start_line_index:
+                    valid_line_nums.append(possible_line[0])
+
+        if settings()['auto_trim']:
+            print(f"Auto trimmed Celeste.tas to lines {valid_line_nums[0]}-{valid_line_nums[-1] + 2}")
+        else:
+            print(f"Trimmed Celeste.tas to lines {input_file_trims[0] + 1}-{celeste_tas_len - input_file_trims[1]}")
+
+        valid_line_nums = order_line_list(valid_line_nums)
+
         print(f"Starting in {self.initial_delay} seconds, switch to the Celeste window!")
         time.sleep(self.initial_delay)
 
@@ -64,35 +93,6 @@ class Radeline:
             raise SystemExit
 
         print(f"Target time is {format_time(self.target_time)} with data {self.target_data}")
-
-        # build a list of line numbers that are valid inputs
-        if settings()['auto_trim']:
-            celeste_tas_joined: str = ''.join(celeste_tas)
-
-            if '#Start' in celeste_tas_joined:
-                celeste_tas = '\n\n'.join(celeste_tas_joined.split('\n\n')[:-1]).split('\n')  # good code, gamers
-                start_line_index: int = celeste_tas.index('#Start')
-            else:
-                print("Couldn't find \"#Start\" in Celeste.tas, using input_file_trims instead of auto trimming")
-                start_line_index = 0
-        else:
-            start_line_index = 0
-
-        valid_line_nums: List[int] = []
-
-        for possible_line in enumerate(celeste_tas):
-            if input_file_trims[0] < possible_line[0] < (len(celeste_tas) - input_file_trims[1]) or settings()['auto_trim']:
-                line = possible_line[1]
-
-                if '#' not in line and 'Read' not in line and ',' in line and not line.lstrip().startswith('0,') and (settings()['auto_trim'] and possible_line[0] > start_line_index):
-                    valid_line_nums.append(possible_line[0])
-
-        if settings()['auto_trim']:
-            print(f"Auto trimmed Celeste.tas to lines {valid_line_nums[0]}-{valid_line_nums[-1] + 2}")
-        else:
-            print(f"Trimmed Celeste.tas to lines {input_file_trims[0] + 1}-{celeste_tas_len - input_file_trims[1]}")
-
-        valid_line_nums = order_line_list(valid_line_nums)
 
         # perform the main operation
         print(f"Beginning optimization of Celeste.tas ({celeste_tas_len} lines, {len(valid_line_nums)} inputs)\n"
@@ -167,8 +167,8 @@ class Radeline:
             frames_lost = compare_timecode_frames(new_time, self.target_time)
 
         # output message if it almost worked
-        if new_time >= self.target_time and new_data == self.target_data:
-            print(f"Resynced but didn't save time: ({format_time(new_time)} >= {format_time(self.target_time)}, +{frames_lost}f)")
+        if new_time > self.target_time and new_data == self.target_data:
+            print(f"Resynced but lost time: ({format_time(new_time)} >= {format_time(self.target_time)}, +{frames_lost}f)")
         if new_data['room'] == self.target_data['room']:
             time.sleep(settings()['loading_time_compensation'])
 
@@ -233,23 +233,25 @@ class Radeline:
         keyboard.press(12)  # - (minus/hyphen)
         time.sleep(0.1)
         keyboard.release(12)
-        time.sleep(0.5)
+        time.sleep(1)
         start_time: float = time.perf_counter()
         last_request_time: float = start_time
 
         while True:
+            current_time: float = time.perf_counter()
+
             if pauseable and not self.paused and keyboard.is_pressed(self.pause_key_code):
                 self.paused = True
                 print("\nPause key pressed")  # technically not paused yet
 
-            if time.perf_counter() - last_request_time >= interval:
+            if current_time - last_request_time >= interval:
                 # just ask the game when the TAS has finished lol
                 session_data: List[str] = requests.get('http://localhost:32270/session').text.split('\r\n')
                 pos_history.append((session_data[4], session_data[5]))  # x and y
                 tas_has_finished = len(pos_history) > consecutive * 2 and len(set(pos_history[-consecutive:])) == 1
-                last_request_time = time.perf_counter()
+                last_request_time = current_time
 
-            if tas_has_finished or time.perf_counter() - start_time > timeout:  # just in case the server based detection fails somehow
+            if tas_has_finished or current_time - start_time > timeout:  # just in case the server based detection fails somehow
                 break
 
     # perform reduce_line() for a list of line numbers
