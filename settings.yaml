@@ -50,3 +50,9 @@ focus_wait_timeout: 3
 session_consecutive: 4
 session_interval: 0.5
 session_timeout: 40
+
+# It's possible for the game to crash if you load custom maps too many times,
+# so these are for trying to deal with that (waits are in seconds)
+restart_crashed_game: true
+restart_prewait: 5
+restart_postwait: 30

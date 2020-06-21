@@ -27,6 +27,7 @@ class Radeline:
         sys.stdout = Logger()
         validate_settings()
         self.pids: Dict[str, Union[int, None]] = get_pids(init=True)
+        self.celeste_path: Union[str, None] = None
         self.improved_lines: List[int] = []
         self.improved_lines_formatted: str = ''
         self.frames_saved_total: int = 0
@@ -81,6 +82,7 @@ class Radeline:
 
         # assumes that Celeste.tas is currently functional
         self.keep_game_focused()
+        self.celeste_path = psutil.Process(self.pids['celeste']).cmdline()[0]
         print("Getting reference data")
         self.run_tas(pauseable=False)
 
@@ -245,11 +247,31 @@ class Radeline:
                 print("\nPause key pressed")  # technically not paused yet
 
             if current_time - last_request_time >= interval:
-                # just ask the game when the TAS has finished lol
-                session_data: List[str] = requests.get('http://localhost:32270/session').text.split('\r\n')
-                pos_history.append((session_data[4], session_data[5]))  # x and y
-                tas_has_finished = len(pos_history) > consecutive * 2 and len(set(pos_history[-consecutive:])) == 1
-                last_request_time = current_time
+                try:
+                    # just ask the game when the TAS has finished lol
+                    session_data: List[str] = requests.get('http://localhost:32270/session').text.split('\r\n')
+                except requests.ConnectionError as error:
+                    # the game probably crashed
+                    time.sleep(settings()['restart_prewait'])
+
+                    if settings()['restart_crashed_game']:
+                        if not get_pids(silent=True)['celeste']:
+                            print("\nThe game seems to have crashed, trying to restart it and continue...")
+                            og_cwd = os.getcwd()
+                            os.chdir(os.path.dirname(self.celeste_path))
+                            subprocess.Popen(self.celeste_path, creationflags=0x00000010)  # the creationflag is for not waiting until the process exits
+                            time.sleep(settings()['restart_postwait'])
+                            os.chdir(og_cwd)
+                            self.pids = get_pids()
+                            print()
+                            self.run_tas(pauseable=True)
+                            tas_has_finished = True
+                    else:
+                        print(f"\nCouldn't access the Everest DebugRC server at http://localhost:32270:\n{error}\n")
+                else:
+                    pos_history.append((session_data[4], session_data[5]))  # x and y
+                    tas_has_finished = len(pos_history) > consecutive * 2 and len(set(pos_history[-consecutive:])) == 1
+                    last_request_time = current_time
 
             if tas_has_finished or current_time - start_time > timeout:  # just in case the server based detection fails somehow
                 break
@@ -406,9 +428,9 @@ def validate_settings():
 
     celeste_path: str = str(settings()['celeste_path'])
     bool_settings = ('exit_game_when_done', 'clear_output_log_on_startup', 'open_celeste_tas_when_done', 'extra_attempts', 'keep_celeste_focused',
-                     'console_load_mode', 'ensure_breakpoint_end', 'auto_trim')
+                     'console_load_mode', 'ensure_breakpoint_end', 'auto_trim', 'restart_crashed_game')
     int_settings = ('extra_attempts_window_size', 'session_consecutive')
-    num_settings = ('initial_delay_time', 'loading_time_compensation', 'focus_wait_timeout', 'session_timeout', 'session_interval')  # int or float
+    num_settings = ('initial_delay_time', 'loading_time_compensation', 'focus_wait_timeout', 'session_timeout', 'session_interval', 'restart_prewait', 'restart_postwait')  # int or float
 
     # makes sure that each setting is what type it needs to be, and some other checks as well
     if not os.path.isdir(celeste_path):
