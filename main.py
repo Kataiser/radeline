@@ -44,9 +44,11 @@ class Radeline:
 
         celeste_tas: List[str] = access_celeste_tas()
         celeste_tas_len: int = len(celeste_tas)  # keep the original length in case auto trim changes it
-        if settings()['ensure_breakpoint_end'] and celeste_tas[-1] != '***':
-            print("Celeste.tas doesn't end with a breakpoint (***), exiting")
-            raise SystemExit
+        while settings()['ensure_breakpoint_end'] and celeste_tas[-1] != '***':
+            print("Celeste.tas doesn't end with a breakpoint (***), pausing (press enter to retry)")
+            input()
+            celeste_tas: List[str] = access_celeste_tas()
+            celeste_tas_len: int = len(celeste_tas)
 
         # build a list of line numbers that are valid inputs
         if settings()['auto_trim']:
@@ -205,10 +207,6 @@ class Radeline:
 
     # simulate keypresses to run the last debug command, run the TAS, and wait a bit
     def run_tas(self, pauseable: bool):
-        if not psutil.pid_exists(self.pids['celeste']):
-            print("\nCeleste has been closed, pausing")
-            self.paused = True
-
         consecutive: int = settings()['session_consecutive']
         interval: float = float(settings()['session_interval'])
         timeout: float = float(settings()['session_timeout'])
