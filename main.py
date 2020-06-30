@@ -127,13 +127,7 @@ class Radeline:
             print(f"Line{pluralize(self.improved_lines)} changed: {self.improved_lines_formatted}")
 
         if settings()['exit_game_when_done']:
-            psutil.Process(self.pids['celeste']).kill()
-
-            try:
-                psutil.Process(self.pids['studio']).kill()
-                print("Closed Celeste and Studio")
-            except psutil.NoSuchProcess:
-                print("Closed Celeste")
+            self.close_running_programs()
 
         if settings()['open_celeste_tas_when_done'] and platform.system() == 'Windows':
             print("Opening Celeste.tas")
@@ -253,12 +247,13 @@ class Radeline:
                     time.sleep(settings()['restart_prewait'])
 
                     if settings()['restart_crashed_game']:
-                        if not get_pids(silent=True)['celeste']:
+                        if not get_pids(silent=True, allow_exit=False)['celeste']:
                             print("\nThe game seems to have crashed, trying to restart it and continue...")
                             og_cwd = os.getcwd()
                             os.chdir(os.path.dirname(self.celeste_path))
                             subprocess.Popen(self.celeste_path, creationflags=0x00000010)  # the creationflag is for not waiting until the process exits
                             time.sleep(settings()['restart_postwait'])
+                            self.close_running_programs(include_notepads=True)
                             os.chdir(og_cwd)
                             self.pids = get_pids()
                             print()
@@ -297,6 +292,27 @@ class Radeline:
 
             print(f"Celeste has been focused, resuming in {self.initial_delay} seconds...\n")
             time.sleep(self.initial_delay)
+
+    # force close the processes of Celeste, Studio, and notepads (optional)
+    def close_running_programs(self, include_notepads: bool = False):
+        try:
+            psutil.Process(self.pids['celeste']).kill()
+            print("Closed Celeste")
+        except psutil.NoSuchProcess:
+            pass
+
+        try:
+            psutil.Process(self.pids['studio']).kill()
+            print("Closed Celeste Studio")
+        except psutil.NoSuchProcess:
+            pass
+
+        if include_notepads and settings()['kill_notepads']:
+            for proc in psutil.process_iter():
+                if proc.parent().pid == self.pids['celeste']:
+                    print(f"Closed {proc.name()}")
+                    proc.kill()
+                    time.sleep(2)
 
 
 # read chapter time and current level (room) from debug.celeste
@@ -367,7 +383,7 @@ def access_celeste_tas(write: List[str] = None):
 
 
 # get the process IDs for Celeste and Studio
-def get_pids(silent: bool = False, init: bool = False) -> Dict[str, Union[int, None]]:
+def get_pids(silent: bool = False, init: bool = False, allow_exit: bool = True) -> Dict[str, Union[int, None]]:
     found_pids: Dict[str, Union[int, None]] = {'celeste': None, 'studio': None}
 
     # https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/tasklist
@@ -384,7 +400,7 @@ def get_pids(silent: bool = False, init: bool = False) -> Dict[str, Union[int, N
         elif 'studio' in process[0].lower() and 'celeste' in process[0].lower():
             found_pids['studio'] = int(process[1])
 
-    if not found_pids['celeste']:
+    if allow_exit and not found_pids['celeste']:
         if not init:
             print("")
 
