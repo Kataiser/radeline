@@ -227,7 +227,7 @@ class Radeline:
         keyboard.press(12)  # - (minus/hyphen)
         time.sleep(0.1)
         keyboard.release(12)
-        time.sleep(1)
+        time.sleep(2)
         start_time: float = time.perf_counter()
         last_request_time: float = start_time
 
@@ -242,28 +242,13 @@ class Radeline:
                 try:
                     # just ask the game when the TAS has finished lol
                     session_data: List[str] = requests.get('http://localhost:32270/session').text.split('\r\n')
-                except requests.ConnectionError as error:
+                except requests.ConnectionError:
                     # the game probably crashed
-                    time.sleep(settings()['restart_prewait'])
-
-                    if settings()['restart_crashed_game']:
-                        if not get_pids(silent=True, allow_exit=False)['celeste']:
-                            print("\nThe game seems to have crashed, trying to restart it and continue...")
-                            og_cwd = os.getcwd()
-                            os.chdir(os.path.dirname(self.celeste_path))
-                            subprocess.Popen(self.celeste_path, creationflags=0x00000010)  # the creationflag is for not waiting until the process exits
-                            time.sleep(settings()['restart_postwait'])
-                            self.close_running_programs(include_notepads=True)
-                            os.chdir(og_cwd)
-                            self.pids = get_pids()
-                            print()
-                            self.run_tas(pauseable=True)
-                            tas_has_finished = True
-                    else:
-                        print(f"\nCouldn't access the Everest DebugRC server at http://localhost:32270:\n{error}\n")
+                    self.restart_game()
+                    tas_has_finished = True
                 else:
                     pos_history.append((session_data[4], session_data[5]))  # x and y
-                    tas_has_finished = len(pos_history) > consecutive * 2 and len(set(pos_history[-consecutive:])) == 1
+                    tas_has_finished = (len(pos_history) > consecutive * 2 and len(set(pos_history[-consecutive:])) == 1) or session_data[2] == 'Level: '
                     last_request_time = current_time
 
             if tas_has_finished or current_time - start_time > timeout:  # just in case the server based detection fails somehow
@@ -290,35 +275,63 @@ class Radeline:
                 focused_window: str = win32gui.GetWindowText(win32gui.GetForegroundWindow())
                 time.sleep(1)
 
+                if not get_pids(silent=True, allow_exit=False)['celeste']:
+                    self.restart_game()
+
             print(f"Celeste has been focused, resuming in {self.initial_delay} seconds...\n")
             time.sleep(self.initial_delay)
 
+    def restart_game(self):
+        time.sleep(settings()['restart_prewait'])
+
+        if settings()['restart_crashed_game']:
+            if not get_pids(silent=True, allow_exit=False)['celeste']:
+                print("\nThe game seems to have crashed, trying to restart it and continue...")
+                self.close_running_programs(include_notepads=True)
+                og_cwd = os.getcwd()
+                os.chdir(os.path.dirname(self.celeste_path))
+                subprocess.Popen(self.celeste_path, creationflags=0x00000010)  # the creationflag is for not waiting until the process exits
+                time.sleep(settings()['restart_postwait'])
+                os.chdir(og_cwd)
+                self.pids = get_pids()
+                print()
+                self.run_tas(pauseable=True)
+
     # force close the processes of Celeste, Studio, and notepads (optional)
     def close_running_programs(self, include_notepads: bool = False):
-        try:
-            psutil.Process(self.pids['celeste']).kill()
-            print("Closed Celeste")
-        except psutil.NoSuchProcess:
-            pass
+        if self.pids['celeste']:
+            try:
+                psutil.Process(self.pids['celeste']).kill()
+                print("Closed Celeste")
+            except psutil.NoSuchProcess:
+                pass
 
-        try:
-            psutil.Process(self.pids['studio']).kill()
-            print("Closed Celeste Studio")
-        except psutil.NoSuchProcess:
-            pass
+        if self.pids['studio']:
+            try:
+                psutil.Process(self.pids['studio']).kill()
+                print("Closed Celeste Studio")
+            except psutil.NoSuchProcess:
+                pass
 
         if include_notepads and settings()['kill_notepads']:
             for proc in psutil.process_iter():
-                if proc.parent().pid == self.pids['celeste']:
-                    print(f"Closed {proc.name()}")
-                    proc.kill()
-                    time.sleep(2)
+                try:
+                    if 'notepad' in proc.name().lower() or 'wordpad' in proc.name().lower():
+                        print(f"Closed {proc.name()}")
+                        proc.kill()
+                except (psutil.AccessDenied, psutil.NoSuchProcess):
+                    pass
 
 
 # read chapter time and current level (room) from debug.celeste
 def parse_save_file() -> dict:
-    with open(os.path.join(settings()['celeste_path'], 'saves', 'debug.celeste'), 'r') as save_file:
-        save_file_read = save_file.read()
+    try:
+        with open(os.path.join(settings()['celeste_path'], 'saves', 'debug.celeste'), 'r') as save_file:
+            save_file_read = save_file.read()
+    except PermissionError:
+        time.sleep(2)
+        with open(os.path.join(settings()['celeste_path'], 'saves', 'debug.celeste'), 'r') as save_file:
+            save_file_read = save_file.read()
 
     parsed: dict = {}
     soup: BeautifulSoup = BeautifulSoup(save_file_read, 'lxml')
@@ -393,12 +406,16 @@ def get_pids(silent: bool = False, init: bool = False, allow_exit: bool = True) 
         processes = []
 
     for process_line in processes:
-        process: List[str] = process_line.split()
+        if '.exe' not in process_line:
+            continue
 
-        if process[0] == 'Celeste.exe':
-            found_pids['celeste'] = int(process[1])
-        elif 'studio' in process[0].lower() and 'celeste' in process[0].lower():
-            found_pids['studio'] = int(process[1])
+        process_name: str = process_line.split('.exe')[0]
+        process_pid: int = int(process_line.split('.exe')[1].split()[0])
+
+        if process_name == 'Celeste':
+            found_pids['celeste'] = process_pid
+        elif 'studio' in process_name.lower() and 'celeste' in process_name.lower():
+            found_pids['studio'] = process_pid
 
     if allow_exit and not found_pids['celeste']:
         if not init:
