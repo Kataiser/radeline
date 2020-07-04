@@ -48,7 +48,8 @@ focus_wait_timeout: 3
 # Used to track if the TAS is still running, using Everest's DebugRC server
 # Don't touch unless you know what you're doing (ask Kataiser if you're having problems)
 session_consecutive: 5
-session_interval: 0.5
+session_interval: 0.75
+session_menus_wait: 1
 session_timeout: 40
 
 # It's possible for the game to crash if you load custom maps too many times,

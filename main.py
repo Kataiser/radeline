@@ -248,8 +248,13 @@ class Radeline:
                     tas_has_finished = True
                 else:
                     pos_history.append((session_data[4], session_data[5]))  # x and y
-                    tas_has_finished = (len(pos_history) > consecutive * 2 and len(set(pos_history[-consecutive:])) == 1) or session_data[2] == 'Level: '
                     last_request_time = current_time
+
+                    if session_data[2] == 'Level: ':
+                        tas_has_finished = True
+                        time.sleep(settings()['session_menus_wait'])
+                    else:
+                        tas_has_finished = (len(pos_history) > consecutive * 2 and len(set(pos_history[-consecutive:])) == 1)
 
             if tas_has_finished or current_time - start_time > timeout:  # just in case the server based detection fails somehow
                 break
@@ -459,9 +464,10 @@ def validate_settings():
 
     celeste_path: str = str(settings()['celeste_path'])
     bool_settings = ('exit_game_when_done', 'clear_output_log_on_startup', 'open_celeste_tas_when_done', 'extra_attempts', 'keep_celeste_focused',
-                     'console_load_mode', 'ensure_breakpoint_end', 'auto_trim', 'restart_crashed_game')
+                     'console_load_mode', 'ensure_breakpoint_end', 'auto_trim', 'restart_crashed_game', 'kill_notepads')
     int_settings = ('extra_attempts_window_size', 'session_consecutive')
-    num_settings = ('initial_delay_time', 'loading_time_compensation', 'focus_wait_timeout', 'session_timeout', 'session_interval', 'restart_prewait', 'restart_postwait')  # int or float
+    num_settings = ('initial_delay_time', 'loading_time_compensation', 'focus_wait_timeout', 'session_timeout', 'session_interval', 'restart_prewait', 'restart_postwait',
+                    'session_menus_wait')  # int or float
 
     # makes sure that each setting is what type it needs to be, and some other checks as well
     if not os.path.isdir(celeste_path):
