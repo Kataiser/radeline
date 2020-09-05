@@ -69,7 +69,7 @@ class Radeline:
             if input_file_trims[0] <= possible_line[0] < (len(celeste_tas) - input_file_trims[1]) or settings()['auto_trim']:
                 line = possible_line[1]
 
-                if '#' not in line and 'Read' not in line and ',' in line and not line.lstrip().startswith('0,') and possible_line[0] > start_line_index:
+                if line.strip() != '' and '#' not in line and 'Read' not in line and not line.lstrip().startswith('0,') and possible_line[0] > start_line_index:
                     valid_line_nums.append(possible_line[0])
 
         if settings()['auto_trim']:
@@ -141,9 +141,9 @@ class Radeline:
         # split the line apart, subtract 1 from the frame number, and rebuild it
         original_line: str = celeste_tas[line_num]
         line_clean: str = original_line.lstrip(' ').rstrip('\n')
-        line_split: List[str] = line_clean.split(',')
+        line_split: List[str] = line_clean.split(',') if ',' in line_clean else [line_clean]
         new_frame: int = int(line_split[0]) - 1
-        line_modified: str = f"{' ' * (4 - len(str(new_frame)))}{new_frame},{','.join(line_split[1:]).rstrip(',')}\n"
+        line_modified: str = f"{' ' * (4 - len(str(new_frame)))}{new_frame}{',' if line_split[1:] else ''}{','.join(line_split[1:]).rstrip(',')}\n"
 
         print(f"Line {line_num + 1}/{len(celeste_tas)}: {line_clean} to {line_modified.lstrip(' ')[:-1]}")
 
