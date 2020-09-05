@@ -69,7 +69,7 @@ class Radeline:
             if input_file_trims[0] <= possible_line[0] < (len(celeste_tas) - input_file_trims[1]) or settings()['auto_trim']:
                 line = possible_line[1]
 
-                if line.strip() != '' and '#' not in line and 'Read' not in line and not line.lstrip().startswith('0,') and possible_line[0] > start_line_index:
+                if line.strip() != '' and '#' not in line and 'Read' not in line and possible_line[0] > start_line_index:
                     valid_line_nums.append(possible_line[0])
 
         if settings()['auto_trim']:
@@ -134,7 +134,9 @@ class Radeline:
             os.startfile(os.path.join(settings()['celeste_path'], 'Celeste.tas'))
 
     # subtract 1 from a line and test if that helped, reverting if it didn't
-    def reduce_line(self, line_num: int):
+    def reduce_line(self, line_num: int, progess_percent: float, feather_adjust: int = 0) -> bool:
+        print(f"({format(progess_percent, '.1f')}%){'*' if feather_adjust != 0 else ''} ", end='')
+
         # load this each time because it may have changed
         celeste_tas: List[str] = access_celeste_tas()
 
@@ -143,7 +145,12 @@ class Radeline:
         line_clean: str = original_line.lstrip(' ').rstrip('\n')
         line_split: List[str] = line_clean.split(',') if ',' in line_clean else [line_clean]
         new_frame: int = int(line_split[0]) - 1
-        line_modified: str = f"{' ' * (4 - len(str(new_frame)))}{new_frame}{',' if line_split[1:] else ''}{','.join(line_split[1:]).rstrip(',')}\n"
+
+        if 'F,' in line_clean and feather_adjust != 0:
+            tweaked_angle: int = int(line_split[-1]) + feather_adjust
+            line_modified: str = f"{' ' * (4 - len(str(new_frame)))}{new_frame},{','.join(line_split[1:-1])},{tweaked_angle}\n"
+        else:
+            line_modified = f"{' ' * (4 - len(str(new_frame)))}{new_frame}{',' if line_split[1:] else ''}{','.join(line_split[1:]).rstrip(',')}\n"
 
         print(f"Line {line_num + 1}/{len(celeste_tas)}: {line_clean} to {line_modified.lstrip(' ')[:-1]}")
 
@@ -182,10 +189,14 @@ class Radeline:
             print(f"OPTIMIZATION #{len(self.improved_lines)} FOUND! {format_time(new_time)} < {format_time(self.target_time)}, -{frames_saved}f "
                   f"(original was {format_time(self.og_target_time)}, -{self.frames_saved_total}f)")
             self.target_time = new_time
+            optimize_feathers: bool = False
+            saved_time: bool = True
         else:
             # revert and save
             celeste_tas[line_num] = original_line
             access_celeste_tas(write=celeste_tas)
+            optimize_feathers = settings()['optimize_feathers'] and 'F,' in line_clean and feather_adjust == 0
+            saved_time = False
 
         if self.paused:
             improved_lines_num = len(self.improved_lines)
@@ -198,6 +209,17 @@ class Radeline:
             settings.cache_clear()  # reload settings file
             validate_settings()
             self.pids = get_pids(silent=True)
+
+        # works by reducing inputs by one again, but this time with slightly changed feather angles
+        if optimize_feathers:
+            feather_window: int = settings()['feather_degree_window_size']
+
+            for offset in [i for i in range(-feather_window, feather_window + 1) if i != 0]:
+                if self.reduce_line(line_num, progess_percent, feather_adjust=offset):
+                    # if a feather change saved time, don't overwrite it
+                    break
+
+        return saved_time
 
     # simulate keypresses to run the last debug command, run the TAS, and wait a bit
     def run_tas(self, pauseable: bool):
@@ -264,10 +286,8 @@ class Radeline:
         for line_enum in enumerate(lines):
             self.keep_game_focused()  # do this before everything to keep both Celeste.tas and the output clean
 
-            progress: str = format((line_enum[0] / (len(lines) - 1)) * 100, '.1f')
-            print(f"({progress}%) ", end='')
-
-            self.reduce_line(line_enum[1])
+            progress: float = (line_enum[0] / (len(lines) - 1)) * 100
+            self.reduce_line(line_enum[1], progress)
 
     # if the game isn't the focused window, wait until it is or until a timeout
     def keep_game_focused(self):
@@ -464,8 +484,8 @@ def validate_settings():
 
     celeste_path: str = str(settings()['celeste_path'])
     bool_settings = ('exit_game_when_done', 'clear_output_log_on_startup', 'open_celeste_tas_when_done', 'extra_attempts', 'keep_celeste_focused',
-                     'console_load_mode', 'ensure_breakpoint_end', 'auto_trim', 'restart_crashed_game', 'kill_notepads')
-    int_settings = ('extra_attempts_window_size', 'session_consecutive')
+                     'console_load_mode', 'ensure_breakpoint_end', 'auto_trim', 'restart_crashed_game', 'kill_notepads', 'optimize_feathers')
+    int_settings = ('extra_attempts_window_size', 'session_consecutive', 'feather_degree_window_size')
     num_settings = ('initial_delay_time', 'loading_time_compensation', 'focus_wait_timeout', 'session_timeout', 'session_interval', 'restart_prewait', 'restart_postwait',
                     'session_menus_wait')  # int or float
 

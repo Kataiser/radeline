@@ -27,6 +27,11 @@ order: random
 # Whether the TAS file uses console load to start, or restart chapter
 console_load_mode: true
 
+# Try to optimize feathers by adjusting their angles by a few degrees
+# Can add up to quite a bit longer execution time with a high degree window
+optimize_feathers: true
+feather_degree_window_size: 2
+
 # Everest has a delay when loading level complete screen textures for custom maps,
 # so wait this many seconds for that (5 is recommended)
 loading_time_compensation: 0
