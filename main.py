@@ -68,8 +68,16 @@ class Radeline:
         for possible_line in enumerate(celeste_tas):
             if input_file_trims[0] <= possible_line[0] < (len(celeste_tas) - input_file_trims[1]) or settings()['auto_trim']:
                 line = possible_line[1]
+                line_valid: bool = True
 
-                if line.strip() != '' and '#' not in line and 'Read' not in line and possible_line[0] > start_line_index:
+                if line.strip() == '' or possible_line[0] <= start_line_index:
+                    line_valid = False
+                else:
+                    for substring in ('#', 'Read', 'Skip', 'Add'):
+                        if substring in line:
+                            line_valid = False
+                            
+                if line_valid:            
                     valid_line_nums.append(possible_line[0])
 
         if settings()['auto_trim']:
