@@ -148,7 +148,7 @@ class Radeline:
 
         if 'F,' in line_clean and feather_adjust != 0:
             line_split[-1] = '360' if line_split[-1] == '' else line_split[-1]
-            tweaked_angle: int = int(line_split[-1]) + feather_adjust
+            tweaked_angle: int = round(float(line_split[-1])) + feather_adjust
             tweaked_angle = 360 + tweaked_angle if tweaked_angle <= 0 else tweaked_angle
             tweaked_angle = tweaked_angle - 360 if tweaked_angle > 360 else tweaked_angle
             line_modified: str = f"{' ' * (4 - len(str(new_frame)))}{new_frame},{','.join(line_split[1:-1])},{tweaked_angle}\n"
