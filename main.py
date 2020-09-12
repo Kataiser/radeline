@@ -73,8 +73,8 @@ class Radeline:
                 if line.strip() == '' or possible_line[0] <= start_line_index:
                     line_valid = False
                 else:
-                    for substring in ('#', 'Read', 'Skip', 'Add'):
-                        if substring in line:
+                    for substring in ('#', 'play', 'console', 'read', 'skip', 'add', 'set', 'unsafe', 'enforceLegal', 'startexport', 'finishexport'):
+                        if substring in line.lower():
                             line_valid = False
                             
                 if line_valid:            
