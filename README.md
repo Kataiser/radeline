@@ -3,6 +3,8 @@
 
 Chaos monkey that optimizes the [Celeste TAS](https://github.com/ShootMe/CelesteTAS) by randomly (or sequentially) changing inputs. Progress for the main game is [here](https://github.com/Kataiser/radeline/projects/1) and results go [here](https://github.com/Kataiser/CelesteTAS/tree/radeline-results) (but I've stopped working on it).
 
+Now includes a horizontal movement simulator! Vertical sim coming soon™
+
 ## Instructions
 1. Change `KeyStart` in `Saves\modsettings-CelesteTAS.celeste` to `- OemMinus`, because I couldn't get the default bind to work
 2. Make sure the inputs in Celeste.tas have a breakpoint on the very last line, a chapter restart at the beginning, and end on the chapter complete screen (or a S&Q)

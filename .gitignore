@@ -9,3 +9,4 @@ RADeline.html
 .mypy_cache
 mypy.bat
 __pycache__/
+movement sim/out.txt
