@@ -12,13 +12,13 @@ except ImportError:
 
 def main():
     # configuration
-    frames: int = 5
-    permutations_per_frame: int = 100000
-    x_init: float = 0
-    speed_x_init: float = 0
-    goal_position: float = 1.5
+    frames: int = 10
+    permutations: int = 100000
+    x_init: float = 0.0
+    speed_x_init: float = 0.0
+    goal_position: float = 0.0
     goal_direction: str = '-'  # - means approaching from the left, + is from the right
-    goal_speed: float = 90  # this is calculated by abs(final speed - goal speed)
+    goal_speed: float = 90.0  # this is calculated by abs(final speed - goal speed)
     prioritize_speed: bool = False  # sort by speed instead of position
     ducking: bool = False
     on_ground: bool = False
@@ -33,7 +33,7 @@ def main():
     print("building permutations...")
     if not tqdm:
         print("(install tqdm to have progress bars if you like)")
-    input_permutations = build_input_permutations(frames, permutations_per_frame)
+    input_permutations = build_input_permutations(frames, permutations)
     valid_permutations = []
     print("\nsimulating inputs...")
 
@@ -90,18 +90,21 @@ def main():
 
             for valid_permutation in valid_permutations:
                 if x == valid_permutation[0] and speed_x == valid_permutation[1]:
-                    append_permutation = False
-                    break
+                    if len(permutation) < len(valid_permutation[2]):
+                        valid_permutations.remove(valid_permutation)
+                    else:
+                        append_permutation = False
+                        break
 
             if append_permutation:
                 valid_permutations.append((x, speed_x, permutation))
 
     if prioritize_speed:
-        valid_permutations.sort(key=lambda p: p[0])
-        valid_permutations.sort(reverse=goal_direction == '-', key=lambda p: abs(p[1] - goal_speed))
+        valid_permutations.sort(reverse=goal_direction == '+', key=lambda p: p[0])
+        valid_permutations.sort(reverse=goal_direction == '+', key=lambda p: abs(p[1] - goal_speed))
     else:
         valid_permutations.sort(reverse=goal_direction == '+', key=lambda p: abs(p[1] - goal_speed))
-        valid_permutations.sort(key=lambda p: p[0])
+        valid_permutations.sort(reverse=goal_direction == '+', key=lambda p: p[0])
 
     print("\ndone, outputting (useful inputs are at the bottom btw)\n")
     end_time = time.perf_counter()
@@ -112,7 +115,7 @@ def main():
     print(f"\nframes: {frames}")
     print(f"total permutations: {len(input_permutations)}")
     print(f"shown permutations: {len(valid_permutations)}")
-    print(f"processing time: {end_time - start_time} s")
+    print(f"processing time: {round(end_time - start_time, 3)} s")
 
 
 def approach(val: float, target: float, max_move: float):
@@ -122,14 +125,13 @@ def approach(val: float, target: float, max_move: float):
         return max(val - max_move, target)
 
 
-def build_input_permutations(frame_limit: int, perm_mult: int):
+def build_input_permutations(frame_limit: int, perms: int):
     input_permutations = []
-    rep_count = perm_mult * frame_limit
 
     if tqdm:
-        reps = tqdm.tqdm(range(rep_count), ncols=100)
+        reps = tqdm.tqdm(range(perms), ncols=100)
     else:
-        reps = range(rep_count)
+        reps = range(perms)
 
     for _ in reps:
         inputs = []

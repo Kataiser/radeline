@@ -3,10 +3,12 @@ import subprocess
 
 def main():
     try:
+        import clipboard
         import keyboard
         import lxml
         import psutil
         import requests
+        import tqdm
         import win32gui
         import yaml
         from bs4 import BeautifulSoup
