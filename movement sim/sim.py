@@ -101,9 +101,9 @@ def main():
 
     if prioritize_speed:
         valid_permutations.sort(reverse=goal_direction == '+', key=lambda p: p[0])
-        valid_permutations.sort(reverse=goal_direction == '+', key=lambda p: abs(p[1] - goal_speed))
+        valid_permutations.sort(reverse=goal_direction == '-', key=lambda p: abs(p[1] - goal_speed))
     else:
-        valid_permutations.sort(reverse=goal_direction == '+', key=lambda p: abs(p[1] - goal_speed))
+        valid_permutations.sort(reverse=goal_direction == '-', key=lambda p: abs(p[1] - goal_speed))
         valid_permutations.sort(reverse=goal_direction == '+', key=lambda p: p[0])
 
     print("\ndone, outputting (useful inputs are at the bottom btw)\n")
