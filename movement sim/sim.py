@@ -84,6 +84,9 @@ def main():
 
                 # calculate position third
                 x += speed_x * delta_time
+                
+        x = round(x, 10)
+        speed_x = round(speed_x, 10)
 
         if (goal_direction == '-' and x < goal_position) or (goal_direction == '+' and x > goal_position):
             append_permutation = True
