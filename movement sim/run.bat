@@ -1,3 +1,3 @@
 @echo off
-python sim.py
+python run.py
 pause

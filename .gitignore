@@ -4,9 +4,11 @@ output_log.txt
 run_custom.bat
 build/
 RADeline.c
-RADeline.*.pyd
 RADeline.html
 .mypy_cache
 mypy.bat
 __pycache__/
 movement sim/out.txt
+movement sim/sim_compiled.c
+movement sim/sim_compiled.html
+*.pyd

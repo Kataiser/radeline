@@ -1,8 +1,11 @@
+import functools
 import math
 import os
 import random
 import sys
 import time
+
+import yaml
 
 try:
     import tqdm
@@ -10,30 +13,38 @@ except ImportError:
     tqdm = None
 
 
-def main():
-    # configuration
-    frames: int = 10
-    permutations: int = 100000
-    x_init: float = 0.0
-    speed_x_init: float = 0.0
-    goal_position: float = 0.0
-    goal_direction: str = '-'  # - means approaching from the left, + is from the right
-    goal_speed: float = 90.0  # this is calculated by abs(final speed - goal speed)
-    prioritize_speed: bool = False  # sort by speed instead of position
-    ducking: bool = False
-    on_ground: bool = False
-    cold_core: bool = False
-    holdable_slow: bool = False
-    holdable_slow_fall: bool = False
-    in_space: bool = False
-    delta_time: float = 1/60
+@functools.lru_cache(maxsize=1)
+class Config:
+    def __init__(self):
+        with open('config.yaml', 'r') as config_file:
+            config_dict = yaml.safe_load(config_file)
 
+        # yes this is awkward but I don't care
+        self.frames: int = int(config_dict['frames'])
+        self.permutations: int = int(config_dict['permutations'])
+        self.axis: str = str(config_dict['axis'])
+        self.x_init: float = float(config_dict['x_init'])
+        self.speed_x_init: float = float(config_dict['speed_x_init'])
+        self.goal_position: float = float(config_dict['goal_position'])
+        self.goal_direction: str = str(config_dict['goal_direction'])
+        self.goal_speed: float = float(config_dict['goal_speed'])
+        self.prioritize_speed: bool = bool(config_dict['prioritize_speed'])
+        self.ducking: bool = bool(config_dict['ducking'])
+        self.on_ground: bool = bool(config_dict['on_ground'])
+        self.cold_core: bool = bool(config_dict['cold_core'])
+        self.holdable_slow: bool = bool(config_dict['holdable_slow'])
+        self.holdable_slow_fall: bool = bool(config_dict['holdable_slow_fall'])
+        self.in_space: bool = bool(config_dict['in_space'])
+
+
+def main():
     start_time = time.perf_counter()
     sys.stdout = Logger()
+    config = Config()
     print("building permutations...")
     if not tqdm:
         print("(install tqdm to have progress bars if you like)")
-    input_permutations = build_input_permutations(frames, permutations)
+    input_permutations = build_input_permutations(config.frames, config.permutations)
     valid_permutations = []
     print("\nsimulating inputs...")
 
@@ -43,71 +54,29 @@ def main():
         input_permutations_iter = input_permutations
 
     for permutation in input_permutations_iter:
-        x: float = x_init
-        speed_x: float = speed_x_init
+        if config.axis == 'x':
+            results_x, results_speed_x = sim_x(permutation)
 
-        for input_line in permutation:
-            inputs = [input_line[1]] * input_line[0]
+            if (config.goal_direction == '-' and results_x < config.goal_position) or (config.goal_direction == '+' and results_x > config.goal_position):
+                append_permutation = True
 
-            for input_key in inputs:
-                # get inputs first
-                move_x: float = {'l': -1.0, '': 0.0, 'r': 1.0}[input_key]
-                
-                # celeste code (from Player.NormalUpdate and Actor.MoveH) somewhat loosely translated from C# to python
+                for valid_permutation in valid_permutations:
+                    if results_x == valid_permutation[0] and results_speed_x == valid_permutation[1]:
+                        if len(permutation) < len(valid_permutation[2]):
+                            valid_permutations.remove(valid_permutation)
+                        else:
+                            append_permutation = False
+                            break
 
-                # calculate speed second
-                if ducking and on_ground:
-                    speed_x = approach(speed_x, 0.0, 500 * delta_time)
-                else:
-                    num1: float = 1 if on_ground else 0.65
+                if append_permutation:
+                    valid_permutations.append((results_x, results_speed_x, permutation))
 
-                    if on_ground and cold_core:
-                        num1 *= 0.3
-
-                    # ignored low friction variant stuff
-
-                    if holdable_slow:
-                        num2: float = 70.0
-                    elif holdable_slow_fall and not on_ground:
-                        num2 = 108.0
-                        num1 *= 0.5
-                    else:
-                        num2 = 90.0
-
-                    if in_space:
-                        num2 *= 0.6
-
-                    if abs(speed_x) <= num2 or (0.0 if speed_x == 0.0 else math.copysign(1, speed_x)) != move_x:
-                        speed_x = approach(speed_x, num2 * move_x, 1000 * num1 * delta_time)
-                    else:
-                        speed_x = approach(speed_x, num2 * move_x, 400 * num1 * delta_time)
-
-                # calculate position third
-                x += speed_x * delta_time
-                
-        x = round(x, 10)
-        speed_x = round(speed_x, 10)
-
-        if (goal_direction == '-' and x < goal_position) or (goal_direction == '+' and x > goal_position):
-            append_permutation = True
-
-            for valid_permutation in valid_permutations:
-                if x == valid_permutation[0] and speed_x == valid_permutation[1]:
-                    if len(permutation) < len(valid_permutation[2]):
-                        valid_permutations.remove(valid_permutation)
-                    else:
-                        append_permutation = False
-                        break
-
-            if append_permutation:
-                valid_permutations.append((x, speed_x, permutation))
-
-    if prioritize_speed:
-        valid_permutations.sort(reverse=goal_direction == '+', key=lambda p: p[0])
-        valid_permutations.sort(reverse=goal_direction == '-', key=lambda p: abs(p[1] - goal_speed))
+    if config.prioritize_speed:
+        valid_permutations.sort(reverse=config.goal_direction == '+', key=lambda p: p[0])
+        valid_permutations.sort(reverse=config.goal_direction == '-', key=lambda p: abs(p[1] - config.goal_speed))
     else:
-        valid_permutations.sort(reverse=goal_direction == '-', key=lambda p: abs(p[1] - goal_speed))
-        valid_permutations.sort(reverse=goal_direction == '+', key=lambda p: p[0])
+        valid_permutations.sort(reverse=config.goal_direction == '-', key=lambda p: abs(p[1] - config.goal_speed))
+        valid_permutations.sort(reverse=config.goal_direction == '+', key=lambda p: p[0])
 
     print("\ndone, outputting (useful inputs are at the bottom btw)\n")
     end_time = time.perf_counter()
@@ -115,10 +84,57 @@ def main():
     for valid_permutation in valid_permutations:
         print(valid_permutation)
 
-    print(f"\nframes: {frames}")
+    print(f"\nframes: {config.frames}")
     print(f"total permutations: {len(input_permutations)}")
     print(f"shown permutations: {len(valid_permutations)}")
     print(f"processing time: {round(end_time - start_time, 3)} s")
+
+
+def sim_x(perm):
+    config = Config()
+    x: float = config.x_init
+    speed_x: float = config.speed_x_init
+
+    for input_line in perm:
+        inputs = [input_line[1]] * input_line[0]
+
+        for input_key in inputs:
+            # get inputs first
+            move_x: float = {'l': -1.0, '': 0.0, 'r': 1.0}[input_key]
+
+            # celeste code (from Player.NormalUpdate and Actor.MoveH) somewhat loosely translated from C# to python
+
+            # calculate speed second
+            if config.ducking and config.on_ground:
+                speed_x = approach(speed_x, 0.0, 500.0 / 60.0)
+            else:
+                num1: float = 1.0 if config.on_ground else 0.65
+
+                if config.on_ground and config.cold_core:
+                    num1 *= 0.3
+
+                # ignored low friction variant stuff
+
+                if config.holdable_slow:
+                    num2: float = 70.0
+                elif config.holdable_slow_fall and not config.on_ground:
+                    num2 = 108.0
+                    num1 *= 0.5
+                else:
+                    num2 = 90.0
+
+                if config.in_space:
+                    num2 *= 0.6
+
+                if abs(speed_x) <= num2 or (0.0 if speed_x == 0.0 else float(math.copysign(1, speed_x))) != move_x:
+                    speed_x = approach(speed_x, num2 * move_x, 1000.0 / 60.0 * num1)
+                else:
+                    speed_x = approach(speed_x, num2 * move_x, 400.0 / 60.0 * num1)
+
+            # calculate position third
+            x += speed_x / 60.0
+
+    return round(x, 10), round(speed_x, 10)
 
 
 def approach(val: float, target: float, max_move: float):

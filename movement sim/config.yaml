@@ -1,0 +1,15 @@
+frames: 10
+permutations: 100000
+axis: 'x'  # which axis to process, x or y
+x_init: 0
+speed_x_init: 0
+goal_position: 1
+goal_direction: '-'  # - means approaching from the left, + is from the right
+goal_speed: 90.0  # this is calculated by abs(final speed - goal speed)
+prioritize_speed: false  # sort by speed instead of position
+ducking: false
+on_ground: false
+cold_core: false
+holdable_slow: false
+holdable_slow_fall: false
+in_space: false
