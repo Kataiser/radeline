@@ -17,34 +17,34 @@ except ImportError:
 class Config:
     def __init__(self):
         with open('config.yaml', 'r') as config_file:
-            config_dict = yaml.safe_load(config_file)
+            cfg_dict = yaml.safe_load(config_file)
 
         # yes this is awkward but I don't care
-        self.frames: int = int(config_dict['frames'])
-        self.permutations: int = int(config_dict['permutations'])
-        self.axis: str = str(config_dict['axis'])
-        self.x_init: float = float(config_dict['x_init'])
-        self.speed_x_init: float = float(config_dict['speed_x_init'])
-        self.goal_position: float = float(config_dict['goal_position'])
-        self.goal_direction: str = str(config_dict['goal_direction'])
-        self.goal_speed: float = float(config_dict['goal_speed'])
-        self.prioritize_speed: bool = bool(config_dict['prioritize_speed'])
-        self.ducking: bool = bool(config_dict['ducking'])
-        self.on_ground: bool = bool(config_dict['on_ground'])
-        self.cold_core: bool = bool(config_dict['cold_core'])
-        self.holdable_slow: bool = bool(config_dict['holdable_slow'])
-        self.holdable_slow_fall: bool = bool(config_dict['holdable_slow_fall'])
-        self.in_space: bool = bool(config_dict['in_space'])
+        self.frames: int = int(cfg_dict['frames'])
+        self.permutations: int = int(cfg_dict['permutations'])
+        self.axis: str = str(cfg_dict['axis'])
+        self.x_init: float = float(cfg_dict['x_init'])
+        self.speed_x_init: float = float(cfg_dict['speed_x_init'])
+        self.goal_position: float = float(cfg_dict['goal_position'])
+        self.goal_direction: str = str(cfg_dict['goal_direction'])
+        self.goal_speed: float = float(cfg_dict['goal_speed'])
+        self.prioritize_speed: bool = bool(cfg_dict['prioritize_speed'])
+        self.ducking: bool = bool(cfg_dict['ducking'])
+        self.on_ground: bool = bool(cfg_dict['on_ground'])
+        self.cold_core: bool = bool(cfg_dict['cold_core'])
+        self.holdable_slow: bool = bool(cfg_dict['holdable_slow'])
+        self.holdable_slow_fall: bool = bool(cfg_dict['holdable_slow_fall'])
+        self.in_space: bool = bool(cfg_dict['in_space'])
 
 
 def main():
     start_time = time.perf_counter()
     sys.stdout = Logger()
-    config = Config()
+    cfg = Config()
     print("building permutations...")
     if not tqdm:
         print("(install tqdm to have progress bars if you like)")
-    input_permutations = build_input_permutations(config.frames, config.permutations)
+    input_permutations = build_input_permutations(cfg.frames, cfg.permutations)
     valid_permutations = []
     print("\nsimulating inputs...")
 
@@ -54,10 +54,10 @@ def main():
         input_permutations_iter = input_permutations
 
     for permutation in input_permutations_iter:
-        if config.axis == 'x':
+        if cfg.axis == 'x':
             results_x, results_speed_x = sim_x(permutation)
 
-            if (config.goal_direction == '-' and results_x < config.goal_position) or (config.goal_direction == '+' and results_x > config.goal_position):
+            if (cfg.goal_direction == '-' and results_x < cfg.goal_position) or (cfg.goal_direction == '+' and results_x > cfg.goal_position):
                 append_permutation = True
 
                 for valid_permutation in valid_permutations:
@@ -71,12 +71,12 @@ def main():
                 if append_permutation:
                     valid_permutations.append((results_x, results_speed_x, permutation))
 
-    if config.prioritize_speed:
-        valid_permutations.sort(reverse=config.goal_direction == '+', key=lambda p: p[0])
-        valid_permutations.sort(reverse=config.goal_direction == '-', key=lambda p: abs(p[1] - config.goal_speed))
+    if cfg.prioritize_speed:
+        valid_permutations.sort(reverse=cfg.goal_direction == '+', key=lambda p: p[0])
+        valid_permutations.sort(reverse=cfg.goal_direction == '-', key=lambda p: abs(p[1] - cfg.goal_speed))
     else:
-        valid_permutations.sort(reverse=config.goal_direction == '-', key=lambda p: abs(p[1] - config.goal_speed))
-        valid_permutations.sort(reverse=config.goal_direction == '+', key=lambda p: p[0])
+        valid_permutations.sort(reverse=cfg.goal_direction == '-', key=lambda p: abs(p[1] - cfg.goal_speed))
+        valid_permutations.sort(reverse=cfg.goal_direction == '+', key=lambda p: p[0])
 
     print("\ndone, outputting (useful inputs are at the bottom btw)\n")
     end_time = time.perf_counter()
@@ -84,46 +84,46 @@ def main():
     for valid_permutation in valid_permutations:
         print(valid_permutation)
 
-    print(f"\nframes: {config.frames}")
+    print(f"\nframes: {cfg.frames}")
     print(f"total permutations: {len(input_permutations)}")
     print(f"shown permutations: {len(valid_permutations)}")
     print(f"processing time: {round(end_time - start_time, 3)} s")
 
 
-def sim_x(perm):
-    config = Config()
-    x: float = config.x_init
-    speed_x: float = config.speed_x_init
+def sim_x(inputs):
+    cfg = Config()
+    x: float = cfg.x_init
+    speed_x: float = cfg.speed_x_init
 
-    for input_line in perm:
-        inputs = [input_line[1]] * input_line[0]
+    for input_line in inputs:
+        input_frames = [input_line[1]] * input_line[0]
 
-        for input_key in inputs:
+        for input_key in input_frames:
+            # celeste code (from Player.NormalUpdate and Actor.MoveH) somewhat loosely translated from C# to python
+
             # get inputs first
             move_x: float = {'l': -1.0, '': 0.0, 'r': 1.0}[input_key]
 
-            # celeste code (from Player.NormalUpdate and Actor.MoveH) somewhat loosely translated from C# to python
-
             # calculate speed second
-            if config.ducking and config.on_ground:
+            if cfg.ducking and cfg.on_ground:
                 speed_x = approach(speed_x, 0.0, 500.0 / 60.0)
             else:
-                num1: float = 1.0 if config.on_ground else 0.65
+                num1: float = 1.0 if cfg.on_ground else 0.65
 
-                if config.on_ground and config.cold_core:
+                if cfg.on_ground and cfg.cold_core:
                     num1 *= 0.3
 
                 # ignored low friction variant stuff
 
-                if config.holdable_slow:
+                if cfg.holdable_slow:
                     num2: float = 70.0
-                elif config.holdable_slow_fall and not config.on_ground:
+                elif cfg.holdable_slow_fall and not cfg.on_ground:
                     num2 = 108.0
                     num1 *= 0.5
                 else:
                     num2 = 90.0
 
-                if config.in_space:
+                if cfg.in_space:
                     num2 *= 0.6
 
                 if abs(speed_x) <= num2 or (0.0 if speed_x == 0.0 else float(math.copysign(1, speed_x))) != move_x:
