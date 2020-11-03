@@ -3,7 +3,7 @@
 
 Chaos monkey that optimizes the [Celeste TAS](https://github.com/ShootMe/CelesteTAS) by randomly (or sequentially) changing inputs. Progress for the main game is [here](https://github.com/Kataiser/radeline/projects/1) and results go [here](https://github.com/Kataiser/CelesteTAS/tree/radeline-results) (but I've stopped working on it).
 
-Now includes a horizontal movement simulator! Vertical sim coming soon™
+Now includes a fully working movement simulator, for brute forcing precise position and/or speed values!
 
 ## Instructions
 1. Change `KeyStart` in `Saves\modsettings-CelesteTAS.celeste` to `- OemMinus`, because I couldn't get the default bind to work
@@ -15,7 +15,17 @@ Now includes a horizontal movement simulator! Vertical sim coming soon™
 7. (Optional) Install [Cython](https://pypi.org/project/Cython/) and run `build.bat`
 8. Run `run.bat`
 
-If you need any assistance, DM me on Discord at Kataiser#4640
+## Movement sim instructions
+1. Install Python >= 3.6 (with pip and "Add python to environment variables" checked)
+1. (Optional but more recommended than normal Radeline) Install [Cython](https://pypi.org/project/Cython/) and run `build.bat`
+1. Run `install.bat`
+1. After running the last frame of unsimulated input, use Ctrl-Shift-C in Studio to copy your position and speed and edit `config.yaml` accordingly
+1. Make all the other changes to the config you need in order to match your game state, including finding the number of frames to simulate
+1. "Permutations" refers to the number of inputs to simulate. This increases run time, especially with more frames, but raises your chances of getting better inputs
+1. Run `run.bat`, your results will also be saved in `out.txt`
+1. (Optional) Run `run formatter.bat` and copy a list of inputs to have them be automatically reformatted in your clipboard to be pastable into Studio
+
+If you need any assistance or additional functionality, DM me on Discord at Kataiser#4640
 
 ## Why the name?
 Because it's a little dumb and almost insulting to real TASers, but dangit if it isn't really cool sometimes (also, Random Madeline). I kind of regret the name and just call it "my optimization script" half the time though
