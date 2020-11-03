@@ -3,6 +3,7 @@ import os
 import random
 import sys
 import time
+from typing import List, Tuple
 
 import tqdm
 import yaml
@@ -43,20 +44,25 @@ class Config:
 def main():
     start_time = time.perf_counter()
     sys.stdout = Logger()
-    cfg = Config()
+    cfg: Config = Config()
     print("building permutations...")
-    input_permutations = build_input_permutations(cfg)
-    valid_permutations = []
+    input_permutations: tuple = build_input_permutations(cfg)
+    valid_permutations: List[Tuple[float, float, tuple]] = []
+    permutation: tuple
     print("\nsimulating inputs...")
 
     for permutation in tqdm.tqdm(input_permutations, ncols=100):
+        results_pos: float
+        results_speed: float
+
         if cfg.axis == 'x':
             results_pos, results_speed = sim_x(permutation, cfg)
         else:
             results_pos, results_speed = sim_y(permutation, cfg)
 
         if (cfg.goal_direction == '-' and results_pos < cfg.goal_position) or (cfg.goal_direction == '+' and results_pos > cfg.goal_position):
-            append_permutation = True
+            append_permutation: bool = True
+            valid_permutation: Tuple[float, float, tuple]
 
             for valid_permutation in valid_permutations:
                 if results_pos == valid_permutation[0] and results_speed == valid_permutation[1]:
@@ -88,15 +94,17 @@ def main():
     print(f"processing time: {round(end_time - start_time, 3)} s")
 
 
-def sim_x(inputs, cfg: Config) -> tuple:
+def sim_x(inputs: tuple, cfg: Config) -> Tuple[float, float]:
     x: float = cfg.pos_init
     speed_x: float = cfg.speed_init
+    input_line: Tuple[int, str]
 
     for input_line in inputs:
-        input_frames = [input_line[1]] * input_line[0]
+        input_frames: List[str] = [input_line[1]] * input_line[0]
+        input_key: str
 
         for input_key in input_frames:
-            # celeste code (from Player.NormalUpdate and Actor.MoveH) somewhat loosely translated from C# to python
+            # celeste code (from Player.NormalUpdate) somewhat loosely translated from C# to python
 
             # get inputs first
             move_x: float = {'l': -1.0, '': 0.0, 'r': 1.0}[input_key]
@@ -128,20 +136,22 @@ def sim_x(inputs, cfg: Config) -> tuple:
             # calculate position third
             x += speed_x / 60.0
 
-    return round(x, 10), round(speed_x, 10)
+    return float(round(x, 10)), float(round(speed_x, 10))
 
 
-def sim_y(inputs, cfg: Config) -> tuple:
+def sim_y(inputs: tuple, cfg: Config) -> Tuple[float, float]:
     y: float = cfg.pos_init
     speed_y: float = cfg.speed_init
     max_fall: float = 160.0
     jump_timer: int = cfg.jump_timer
+    input_line: Tuple[int, str]
 
     for input_line in inputs:
-        input_frames = [input_line[1]] * input_line[0]
+        input_frames: List[str] = [input_line[1]] * input_line[0]
+        input_key: str
 
         for input_key in input_frames:
-            # celeste code (from Player.NormalUpdate and Actor.MoveV) somewhat loosely translated from C# to python
+            # celeste code (from Player.NormalUpdate) somewhat loosely translated from C# to python
 
             # get inputs first
             move_y: int = {'j': 0, '': 0, 'd': 1}[input_key]
@@ -181,18 +191,18 @@ def sim_y(inputs, cfg: Config) -> tuple:
             # calculate position third
             y += speed_y / 60.0
 
-    return round(y, 10), round(speed_y, 10)
+    return float(round(y, 10)), float(round(speed_y, 10))
 
 
-def approach(val: float, target: float, max_move: float):
+def approach(val: float, target: float, max_move: float) -> float:
     if val <= target:
         return min(val + max_move, target)
     else:
         return max(val - max_move, target)
 
 
-def build_input_permutations(cfg):
-    input_permutations = []
+def build_input_permutations(cfg: Config) -> tuple:
+    input_permutations: List[tuple] = []
 
     if cfg.axis == 'x':
         keys = ('l', '', 'r')
@@ -200,7 +210,7 @@ def build_input_permutations(cfg):
         keys = ('j', '', 'd')
 
     for _ in tqdm.tqdm(range(cfg.permutations), ncols=100):
-        inputs = []
+        inputs: List[Tuple[int, str]] = []
         frame_counter = 0
 
         while frame_counter < cfg.frames:
@@ -208,9 +218,11 @@ def build_input_permutations(cfg):
             frame_counter += frames
             inputs.append((frames, random.choice(keys)))
 
-        input_permutations.append(inputs)
+        input_permutations.append(tuple(inputs))
 
-    return input_permutations
+    input_permutations_tuple: tuple = tuple(input_permutations)
+    del input_permutations
+    return input_permutations_tuple
 
 
 # log all prints to a file
