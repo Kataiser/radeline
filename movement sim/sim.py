@@ -1,19 +1,13 @@
-import functools
 import math
 import os
 import random
 import sys
 import time
 
+import tqdm
 import yaml
 
-try:
-    import tqdm
-except ImportError:
-    tqdm = None
 
-
-@functools.lru_cache(maxsize=1)
 class Config:
     def __init__(self):
         with open('config.yaml', 'r') as config_file:
@@ -23,8 +17,10 @@ class Config:
         self.frames: int = int(cfg_dict['frames'])
         self.permutations: int = int(cfg_dict['permutations'])
         self.axis: str = str(cfg_dict['axis'])
-        self.x_init: float = float(cfg_dict['x_init'])
-        self.speed_x_init: float = float(cfg_dict['speed_x_init'])
+        self.pos_init: float = float(cfg_dict['pos_init'])
+        self.speed_init: float = float(cfg_dict['speed_init'])
+        self.jump_timer: int = int(cfg_dict['jump_timer'])
+        self.jump_speed: float = float(cfg_dict['jump_speed'])
         self.goal_position: float = float(cfg_dict['goal_position'])
         self.goal_direction: str = str(cfg_dict['goal_direction'])
         self.goal_speed: float = float(cfg_dict['goal_speed'])
@@ -33,8 +29,15 @@ class Config:
         self.on_ground: bool = bool(cfg_dict['on_ground'])
         self.cold_core: bool = bool(cfg_dict['cold_core'])
         self.holdable_slow: bool = bool(cfg_dict['holdable_slow'])
-        self.holdable_slow_fall: bool = bool(cfg_dict['holdable_slow_fall'])
         self.in_space: bool = bool(cfg_dict['in_space'])
+        self.auto_jump: bool = bool(cfg_dict['auto_jump'])
+
+        if self.axis not in ('x', 'y'):
+            print("axis must be x or y, exiting")
+            raise SystemExit
+        if self.goal_direction not in ('-', '+'):
+            print("axis must be - or +, exiting")
+            raise SystemExit
 
 
 def main():
@@ -42,34 +45,29 @@ def main():
     sys.stdout = Logger()
     cfg = Config()
     print("building permutations...")
-    if not tqdm:
-        print("(install tqdm to have progress bars if you like)")
-    input_permutations = build_input_permutations(cfg.frames, cfg.permutations)
+    input_permutations = build_input_permutations(cfg)
     valid_permutations = []
     print("\nsimulating inputs...")
 
-    if tqdm:
-        input_permutations_iter = tqdm.tqdm(input_permutations, ncols=100)
-    else:
-        input_permutations_iter = input_permutations
-
-    for permutation in input_permutations_iter:
+    for permutation in tqdm.tqdm(input_permutations, ncols=100):
         if cfg.axis == 'x':
-            results_x, results_speed_x = sim_x(permutation)
+            results_pos, results_speed = sim_x(permutation, cfg)
+        else:
+            results_pos, results_speed = sim_y(permutation, cfg)
 
-            if (cfg.goal_direction == '-' and results_x < cfg.goal_position) or (cfg.goal_direction == '+' and results_x > cfg.goal_position):
-                append_permutation = True
+        if (cfg.goal_direction == '-' and results_pos < cfg.goal_position) or (cfg.goal_direction == '+' and results_pos > cfg.goal_position):
+            append_permutation = True
 
-                for valid_permutation in valid_permutations:
-                    if results_x == valid_permutation[0] and results_speed_x == valid_permutation[1]:
-                        if len(permutation) < len(valid_permutation[2]):
-                            valid_permutations.remove(valid_permutation)
-                        else:
-                            append_permutation = False
-                            break
+            for valid_permutation in valid_permutations:
+                if results_pos == valid_permutation[0] and results_speed == valid_permutation[1]:
+                    if len(permutation) < len(valid_permutation[2]):
+                        valid_permutations.remove(valid_permutation)
+                    else:
+                        append_permutation = False
+                        break
 
-                if append_permutation:
-                    valid_permutations.append((results_x, results_speed_x, permutation))
+            if append_permutation:
+                valid_permutations.append((results_pos, results_speed, permutation))
 
     if cfg.prioritize_speed:
         valid_permutations.sort(reverse=cfg.goal_direction == '+', key=lambda p: p[0])
@@ -90,10 +88,9 @@ def main():
     print(f"processing time: {round(end_time - start_time, 3)} s")
 
 
-def sim_x(inputs):
-    cfg = Config()
-    x: float = cfg.x_init
-    speed_x: float = cfg.speed_x_init
+def sim_x(inputs, cfg: Config) -> tuple:
+    x: float = cfg.pos_init
+    speed_x: float = cfg.speed_init
 
     for input_line in inputs:
         input_frames = [input_line[1]] * input_line[0]
@@ -117,9 +114,6 @@ def sim_x(inputs):
 
                 if cfg.holdable_slow:
                     num2: float = 70.0
-                elif cfg.holdable_slow_fall and not cfg.on_ground:
-                    num2 = 108.0
-                    num1 *= 0.5
                 else:
                     num2 = 90.0
 
@@ -137,6 +131,59 @@ def sim_x(inputs):
     return round(x, 10), round(speed_x, 10)
 
 
+def sim_y(inputs, cfg: Config) -> tuple:
+    y: float = cfg.pos_init
+    speed_y: float = cfg.speed_init
+    max_fall: float = 160.0
+    jump_timer: int = cfg.jump_timer
+
+    for input_line in inputs:
+        input_frames = [input_line[1]] * input_line[0]
+
+        for input_key in input_frames:
+            # celeste code (from Player.NormalUpdate and Actor.MoveV) somewhat loosely translated from C# to python
+
+            # get inputs first
+            move_y: int = {'j': 0, '': 0, 'd': 1}[input_key]
+            jump: bool = input_key == 'j'
+
+            # calculate speed second
+            target1: float = 160.0
+            target2: float = 240.0
+
+            if cfg.in_space:
+                target1 *= 0.6
+                target2 *= 0.6
+
+            # ignored some weird holdable stuff
+
+            if move_y == 1 and speed_y >= target1:
+                max_fall = approach(max_fall, target2, 300.0 / 60.0)
+            else:
+                max_fall = approach(max_fall, target1, 300.0 / 60.0)
+
+            # this line was kinda translated more using my experience from TASing than from actually translating the code so it may be wrong
+            num: float = 0.5 if (abs(speed_y) <= 40.0 and (jump or cfg.auto_jump)) else 1.0
+
+            if cfg.in_space:
+                num *= 0.6
+
+            speed_y = approach(speed_y, max_fall, (900.0 * num) / 60.0)
+
+            if jump_timer > 0:
+                if cfg.auto_jump or jump:
+                    speed_y = min(speed_y, cfg.jump_speed)
+                else:
+                    jump_timer = 0
+
+            jump_timer -= 1
+
+            # calculate position third
+            y += speed_y / 60.0
+
+    return round(y, 10), round(speed_y, 10)
+
+
 def approach(val: float, target: float, max_move: float):
     if val <= target:
         return min(val + max_move, target)
@@ -144,22 +191,22 @@ def approach(val: float, target: float, max_move: float):
         return max(val - max_move, target)
 
 
-def build_input_permutations(frame_limit: int, perms: int):
+def build_input_permutations(cfg):
     input_permutations = []
 
-    if tqdm:
-        reps = tqdm.tqdm(range(perms), ncols=100)
+    if cfg.axis == 'x':
+        keys = ('l', '', 'r')
     else:
-        reps = range(perms)
+        keys = ('j', '', 'd')
 
-    for _ in reps:
+    for _ in tqdm.tqdm(range(cfg.permutations), ncols=100):
         inputs = []
         frame_counter = 0
 
-        while frame_counter < frame_limit:
-            frames = round(random.randint(1, frame_limit - frame_counter))
+        while frame_counter < cfg.frames:
+            frames = round(random.randint(1, cfg.frames - frame_counter))
             frame_counter += frames
-            inputs.append((frames, random.choice(('l', '', 'r'))))
+            inputs.append((frames, random.choice(keys)))
 
         input_permutations.append(inputs)
 

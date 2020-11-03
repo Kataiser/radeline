@@ -1,13 +1,16 @@
 import time
 
 import clipboard
+import yaml
 
 
 def main():
     # this is used to convert from a list of input tuples (e.g. [(2, 'r'), (4, 'l'), (3, '')]) to something that can just be pasted into studio
     # just copy a list from out.txt and it'll automatically become converted in your clipboard
 
-    append_keys = ''
+    with open('config.yaml', 'r') as config_file:
+        append_keys = yaml.safe_load(config_file)['append_keys']
+
     print('ready\n')
 
     while True:
