@@ -17,3 +17,4 @@ goal_speed: 90  # this is calculated by |final speed - goal speed|
 goal_direction: '-'  # - means approaching from the left/top, + is from the right/bottom
 prioritize_speed: false  # sort by speed instead of position
 append_keys: ''  # keys the formatter adds, e.g. "rg" to hold right and grab as well
+open_results: true  # automatically opens the results file in the default text editor

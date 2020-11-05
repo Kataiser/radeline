@@ -1,12 +1,15 @@
 import math
 import os
+import platform
 import random
 import sys
 import time
-from typing import List, Tuple
+from typing import List, Set, Tuple
 
 import tqdm
 import yaml
+
+import input_formatter
 
 
 class Config:
@@ -32,6 +35,8 @@ class Config:
         self.holding: bool = bool(cfg_dict['holding'])
         self.in_space: bool = bool(cfg_dict['in_space'])
         self.auto_jump: bool = bool(cfg_dict['auto_jump'])
+        self.append_keys: str = str(cfg_dict['append_keys'])
+        self.open_results: bool = bool(cfg_dict['open_results'])
 
         if self.axis not in ('x', 'y'):
             print("axis must be x or y, exiting")
@@ -88,10 +93,15 @@ def main():
     for valid_permutation in valid_permutations:
         print(valid_permutation)
 
-    print(f"\nframes: {cfg.frames}")
-    print(f"total permutations: {len(input_permutations)}")
+    print(f"\nintended permutations: {cfg.permutations}")
+    print(f"generated permutations: {len(input_permutations)}")
     print(f"shown permutations: {len(valid_permutations)}")
-    print(f"processing time: {round(end_time - start_time, 3)} s")
+    print(f"processing time: {round(end_time - start_time, 3)} s\n")
+
+    if cfg.open_results and platform.system() == 'Windows':
+        os.startfile(sys.stdout.filename)
+
+    input_formatter.main()
 
 
 def sim_x(inputs: tuple, cfg: Config) -> Tuple[float, float]:
@@ -202,7 +212,7 @@ def approach(val: float, target: float, max_move: float) -> float:
 
 
 def build_input_permutations(cfg: Config) -> tuple:
-    input_permutations: List[tuple] = []
+    input_permutations: Set[tuple] = set()
 
     if cfg.axis == 'x':
         keys = ('l', '', 'r')
@@ -218,7 +228,7 @@ def build_input_permutations(cfg: Config) -> tuple:
             frame_counter += frames
             inputs.append((frames, random.choice(keys)))
 
-        input_permutations.append(tuple(inputs))
+        input_permutations.add(tuple(inputs))
 
     input_permutations_tuple: tuple = tuple(input_permutations)
     del input_permutations
@@ -228,11 +238,13 @@ def build_input_permutations(cfg: Config) -> tuple:
 # log all prints to a file
 class Logger(object):
     def __init__(self):
-        if os.path.isfile('out.txt'):
-            os.remove('out.txt')
+        self.filename = 'results.txt'
+
+        if os.path.isfile(self.filename):
+            os.remove(self.filename)
 
         self.terminal = sys.stdout
-        self.log = open('out.txt', 'a')
+        self.log = open(self.filename, 'a')
 
     def write(self, message):
         self.terminal.write(message)

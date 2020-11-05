@@ -8,7 +8,7 @@ RADeline.html
 .mypy_cache
 mypy.bat
 __pycache__/
-movement sim/out.txt
+movement sim/results.txt
 movement sim/sim_compiled.c
 movement sim/sim_compiled.html
 *.pyd

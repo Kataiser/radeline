@@ -11,24 +11,26 @@ def main():
     with open('config.yaml', 'r') as config_file:
         append_keys = yaml.safe_load(config_file)['append_keys']
 
-    print('\nauto formatter ready\n')
+    print('auto formatter ready\n')
 
     while True:
-        in_text: str = clipboard.paste().strip()
-        print(in_text)
-        in_text = in_text.replace(')))', '))').replace('((', '))')
+        in_text_raw: str = clipboard.paste()
+        in_text = in_text_raw.strip().replace(')))', '))')#.replace('((', '))')
 
-        if in_text.count('(') > 0 and in_text.count(')') > 0 and in_text.count(',') % 2 == 1 and in_text.count('\'') % 2 == 0:  # that's probably good
+        if in_text.startswith('((') and in_text.endswith('))') and in_text.count('\'') % 2 == 0:  # that's probably good
             out = []
 
-            for line in in_text.split('(')[1:]:
+            for line in in_text.split('(')[2:]:
                 line_split = line.split(',')
                 out.append(line_split[0] + ' ' + line_split[1][2].replace('\'', '') + append_keys)
 
             out_joined = '\n'.join(out)
-            print(out_joined)
-            print()
-            clipboard.copy(out_joined)
+
+            if out_joined != in_text:
+                print(in_text_raw.strip())
+                print(out_joined)
+                print()
+                clipboard.copy(out_joined)
 
         time.sleep(0.5)
 
