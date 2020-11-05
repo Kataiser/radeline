@@ -11,12 +11,14 @@ def main():
     with open('config.yaml', 'r') as config_file:
         append_keys = yaml.safe_load(config_file)['append_keys']
 
-    print('ready\n')
+    print('\nauto formatter ready\n')
 
     while True:
-        in_text: str = clipboard.paste().strip().rstrip(')\n')
+        in_text: str = clipboard.paste().strip()
+        print(in_text)
+        in_text = in_text.replace(')))', '))').replace('((', '))')
 
-        if in_text.count('[') == 1 and in_text.count(']') == 1 and in_text.count('(') > 0 and in_text.count('(') == in_text.count(')'):
+        if in_text.count('(') > 0 and in_text.count(')') > 0 and in_text.count(',') % 2 == 1 and in_text.count('\'') % 2 == 0:  # that's probably good
             out = []
 
             for line in in_text.split('(')[1:]:
@@ -24,7 +26,6 @@ def main():
                 out.append(line_split[0] + ' ' + line_split[1][2].replace('\'', '') + append_keys)
 
             out_joined = '\n'.join(out)
-            print(in_text)
             print(out_joined)
             print()
             clipboard.copy(out_joined)

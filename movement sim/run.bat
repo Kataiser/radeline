@@ -1,3 +1,3 @@
 @echo off
 python run.py
-pause
+python formatter.py

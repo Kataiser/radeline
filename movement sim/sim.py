@@ -29,7 +29,7 @@ class Config:
         self.ducking: bool = bool(cfg_dict['ducking'])
         self.on_ground: bool = bool(cfg_dict['on_ground'])
         self.cold_core: bool = bool(cfg_dict['cold_core'])
-        self.holdable_slow: bool = bool(cfg_dict['holdable_slow'])
+        self.holding: bool = bool(cfg_dict['holding'])
         self.in_space: bool = bool(cfg_dict['in_space'])
         self.auto_jump: bool = bool(cfg_dict['auto_jump'])
 
@@ -77,9 +77,9 @@ def main():
 
     if cfg.prioritize_speed:
         valid_permutations.sort(reverse=cfg.goal_direction == '+', key=lambda p: p[0])
-        valid_permutations.sort(reverse=cfg.goal_direction == '-', key=lambda p: abs(p[1] - cfg.goal_speed))
+        valid_permutations.sort(key=lambda p: abs(p[1] - cfg.goal_speed))
     else:
-        valid_permutations.sort(reverse=cfg.goal_direction == '-', key=lambda p: abs(p[1] - cfg.goal_speed))
+        valid_permutations.sort(key=lambda p: abs(p[1] - cfg.goal_speed))
         valid_permutations.sort(reverse=cfg.goal_direction == '+', key=lambda p: p[0])
 
     print("\ndone, outputting (useful inputs are at the bottom btw)\n")
@@ -120,7 +120,7 @@ def sim_x(inputs: tuple, cfg: Config) -> Tuple[float, float]:
 
                 # ignored low friction variant stuff
 
-                if cfg.holdable_slow:
+                if cfg.holding:
                     num2: float = 70.0
                 else:
                     num2 = 90.0

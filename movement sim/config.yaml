@@ -6,7 +6,7 @@ auto_jump: false  # forced half peak gravity, from dashes, springs, etc.
 ducking: false
 on_ground: false
 cold_core: false
-holdable_slow: false
+holding: false  # only applies to x axis
 in_space: false
 
 frames: 10
