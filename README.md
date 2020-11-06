@@ -22,7 +22,7 @@ Now includes a fully working movement simulator, for brute forcing precise posit
 1. After running the last frame of unsimulated input, use Ctrl-Shift-C in Studio to copy your position and speed and edit `config.yaml` accordingly
 1. Make all the other changes to the config you need in order to match your game state, including finding the number of frames to simulate
 1. "Permutations" refers to the number of inputs to simulate. This increases run time, especially with more frames, but raises your chances of getting better inputs
-1. Run `run.bat`, your results will also be saved in `out.txt`
+1. Run `run.bat`, your results will also be saved in `results.txt`
 1. (Optional) Run `run formatter.bat` and copy a list of inputs to have them be automatically reformatted in your clipboard to be pastable into Studio
 
 If you need any assistance or additional functionality, DM me on Discord at Kataiser#4640
