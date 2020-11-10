@@ -101,6 +101,7 @@ def main():
     if cfg.open_results and platform.system() == 'Windows':
         os.startfile(sys.stdout.filename)
 
+    sys.stdout = sys.__stdout__
     input_formatter.main()
 
 
@@ -123,25 +124,25 @@ def sim_x(inputs: tuple, cfg: Config) -> Tuple[float, float]:
             if cfg.ducking and cfg.on_ground:
                 speed_x = approach(speed_x, 0.0, 500.0 / 60.0)
             else:
-                num1: float = 1.0 if cfg.on_ground else 0.65
+                mult: float = 1.0 if cfg.on_ground else 0.65
 
                 if cfg.on_ground and cfg.cold_core:
-                    num1 *= 0.3
+                    mult *= 0.3
 
                 # ignored low friction variant stuff
 
                 if cfg.holding:
-                    num2: float = 70.0
+                    max_: float = 70.0
                 else:
-                    num2 = 90.0
+                    max_ = 90.0
 
                 if cfg.in_space:
-                    num2 *= 0.6
+                    max_ *= 0.6
 
-                if abs(speed_x) <= num2 or (0.0 if speed_x == 0.0 else float(math.copysign(1, speed_x))) != move_x:
-                    speed_x = approach(speed_x, num2 * move_x, 1000.0 / 60.0 * num1)
+                if abs(speed_x) <= max_ or (0.0 if speed_x == 0.0 else float(math.copysign(1, speed_x))) != move_x:
+                    speed_x = approach(speed_x, max_ * move_x, 1000.0 / 60.0 * mult)
                 else:
-                    speed_x = approach(speed_x, num2 * move_x, 400.0 / 60.0 * num1)
+                    speed_x = approach(speed_x, max_ * move_x, 400.0 / 60.0 * mult)
 
             # calculate position third
             x += speed_x / 60.0
@@ -165,33 +166,33 @@ def sim_y(inputs: tuple, cfg: Config) -> Tuple[float, float]:
 
             # get inputs first
             move_y: int = {'j': 0, '': 0, 'd': 1}[input_key]
-            jump: bool = input_key == 'j'
+            jumping: bool = input_key == 'j'
 
             # calculate speed second
-            target1: float = 160.0
-            target2: float = 240.0
+            mf: float = 160.0
+            fmf: float = 240.0
 
             if cfg.in_space:
-                target1 *= 0.6
-                target2 *= 0.6
+                mf *= 0.6
+                fmf *= 0.6
 
             # ignored some weird holdable stuff
 
-            if move_y == 1 and speed_y >= target1:
-                max_fall = approach(max_fall, target2, 300.0 / 60.0)
+            if move_y == 1 and speed_y >= mf:
+                max_fall = approach(max_fall, fmf, 300.0 / 60.0)
             else:
-                max_fall = approach(max_fall, target1, 300.0 / 60.0)
+                max_fall = approach(max_fall, mf, 300.0 / 60.0)
 
             # this line was kinda translated more using my experience from TASing than from actually translating the code so it may be wrong
-            num: float = 0.5 if (abs(speed_y) <= 40.0 and (jump or cfg.auto_jump)) else 1.0
+            mult: float = 0.5 if (abs(speed_y) <= 40.0 and (jumping or cfg.auto_jump)) else 1.0
 
             if cfg.in_space:
-                num *= 0.6
+                mult *= 0.6
 
-            speed_y = approach(speed_y, max_fall, (900.0 * num) / 60.0)
+            speed_y = approach(speed_y, max_fall, (900.0 * mult) / 60.0)
 
             if jump_timer > 0:
-                if cfg.auto_jump or jump:
+                if cfg.auto_jump or jumping:
                     speed_y = min(speed_y, cfg.jump_speed)
                 else:
                     jump_timer = 0
@@ -215,7 +216,7 @@ def build_input_permutations(cfg: Config) -> tuple:
     input_permutations: Set[tuple] = set()
 
     if cfg.axis == 'x':
-        keys = ('l', '', 'r')
+        keys: Tuple[str, str, str] = ('l', '', 'r')
     else:
         keys = ('j', '', 'd')
 
@@ -225,8 +226,13 @@ def build_input_permutations(cfg: Config) -> tuple:
 
         while frame_counter < cfg.frames:
             frames = round(random.randint(1, cfg.frames - frame_counter))
+            key: str = random.choice(keys)
             frame_counter += frames
-            inputs.append((frames, random.choice(keys)))
+
+            if inputs and inputs[-1][1] == key:
+                inputs[-1] = (inputs[-1][0] + frames, inputs[-1][1])
+            else:
+                inputs.append((frames, key))
 
         input_permutations.add(tuple(inputs))
 
