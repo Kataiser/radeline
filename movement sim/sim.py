@@ -4,7 +4,7 @@ import platform
 import random
 import sys
 import time
-from typing import List, Set, Tuple
+from typing import List, Set, Tuple, Union
 
 import tqdm
 import yaml
@@ -21,8 +21,6 @@ class Config:
         self.frames: int = int(cfg_dict['frames'])
         self.permutations: int = int(cfg_dict['permutations'])
         self.axis: str = str(cfg_dict['axis'])
-        self.pos_init: float = float(cfg_dict['pos_init'])
-        self.speed_init: float = float(cfg_dict['speed_init'])
         self.jump_timer: int = int(cfg_dict['jump_timer'])
         self.jump_speed: float = float(cfg_dict['jump_speed'])
         self.goal_position: float = float(cfg_dict['goal_position'])
@@ -39,22 +37,27 @@ class Config:
         self.open_results: bool = bool(cfg_dict['open_results'])
 
         if self.axis not in ('x', 'y'):
-            print("axis must be x or y, exiting")
+            print("Axis must be x or y, exiting")
             raise SystemExit
         if self.goal_direction not in ('-', '+'):
-            print("axis must be - or +, exiting")
+            print("Goal direction must be - or +, exiting")
             raise SystemExit
+
+        init_state = str(cfg_dict['init_state']).strip().split()
+        axis_index = 0 if self.axis == 'x' else 1
+        self.pos_init: float = float(init_state[1].split(',')[axis_index])
+        self.speed_init: float = float(init_state[3].split(',')[axis_index])
 
 
 def main():
     start_time = time.perf_counter()
     sys.stdout = Logger()
     cfg: Config = Config()
-    print("building permutations...")
+    print("Building permutations...")
     input_permutations: tuple = build_input_permutations(cfg)
     valid_permutations: List[Tuple[float, float, tuple]] = []
     permutation: tuple
-    print("\nsimulating inputs...")
+    print("\nSimulating inputs...")
 
     for permutation in tqdm.tqdm(input_permutations, ncols=100):
         results_pos: float
@@ -82,21 +85,29 @@ def main():
 
     if cfg.prioritize_speed:
         valid_permutations.sort(reverse=cfg.goal_direction == '+', key=lambda p: p[0])
-        valid_permutations.sort(key=lambda p: abs(p[1] - cfg.goal_speed))
+        valid_permutations.sort(reverse=True, key=lambda p: abs(p[1] - cfg.goal_speed))
     else:
-        valid_permutations.sort(key=lambda p: abs(p[1] - cfg.goal_speed))
+        valid_permutations.sort(reverse=True, key=lambda p: abs(p[1] - cfg.goal_speed))
         valid_permutations.sort(reverse=cfg.goal_direction == '+', key=lambda p: p[0])
 
-    print("\ndone, outputting (useful inputs are at the bottom btw)\n")
+    print("\nDone, outputting\n")
     end_time = time.perf_counter()
 
     for valid_permutation in valid_permutations:
-        print(valid_permutation)
+        perm_display: List[List[Union[int, str]]] = []
 
-    print(f"\nintended permutations: {cfg.permutations}")
-    print(f"generated permutations: {len(input_permutations)}")
-    print(f"shown permutations: {len(valid_permutations)}")
-    print(f"processing time: {round(end_time - start_time, 3)} s\n")
+        for input_line in valid_permutation[2]:
+            if perm_display and perm_display[-1][1] == input_line[1]:
+                perm_display[-1][0] += input_line[0]
+            else:
+                perm_display.append(list(input_line))
+
+        print(f'{valid_permutation[:2]} {perm_display}')
+
+    print(f"\nIntended permutations: {cfg.permutations}")
+    print(f"Generated permutations: {len(input_permutations)}")
+    print(f"Shown permutations: {len(valid_permutations)}")
+    print(f"Processing time: {round(end_time - start_time, 3)} s\n")
 
     if cfg.open_results and platform.system() == 'Windows':
         os.startfile(sys.stdout.filename)
@@ -226,13 +237,8 @@ def build_input_permutations(cfg: Config) -> tuple:
 
         while frame_counter < cfg.frames:
             frames = round(random.randint(1, cfg.frames - frame_counter))
-            key: str = random.choice(keys)
             frame_counter += frames
-
-            if inputs and inputs[-1][1] == key:
-                inputs[-1] = (inputs[-1][0] + frames, inputs[-1][1])
-            else:
-                inputs.append((frames, key))
+            inputs.append((frames, random.choice(keys)))
 
         input_permutations.add(tuple(inputs))
 

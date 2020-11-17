@@ -1,5 +1,13 @@
-pos_init: 0
-speed_init: 0
+frames: 15
+permutations: 1000000
+axis: 'x'  # which axis to process, x or y
+goal_position: 160
+goal_speed: 90  # this is calculated by |final speed - goal speed|
+goal_direction: '-'  # - means approaching from the left/top, + is from the right/bottom
+prioritize_speed: false  # sort by speed instead of position
+append_keys: ''  # keys the formatter adds, e.g. "jg" to hold jump and grab as well
+open_results: true  # automatically opens the results file in the default text editor
+
 jump_timer: 0  # 11 if just jumped, 14 if wallbounced
 jump_speed: 0  # -105 if just jumped, -160 if wallbounced, irrelevant if jump timer = 0
 auto_jump: false  # forced half peak gravity, from dashes, springs, etc.
@@ -9,12 +17,12 @@ cold_core: false
 holding: false  # only applies to x axis
 in_space: false
 
-frames: 10
-permutations: 100000
-axis: 'x'  # which axis to process, x or y
-goal_position: 1
-goal_speed: 90  # this is calculated by |final speed - goal speed|
-goal_direction: '-'  # - means approaching from the left/top, + is from the right/bottom
-prioritize_speed: false  # sort by speed instead of position
-append_keys: ''  # keys the formatter adds, e.g. "rg" to hold right and grab as well
-open_results: true  # automatically opens the results file in the default text editor
+# use control-shift-C in Studio and paste here
+init_state: "
+Pos: 160.458372503519,67.7499865889549
+Speed: 0.00,-15.00
+Vel: 0.00,0.00
+Stamina: 110 Timer: 16.609
+Dash 
+[1]
+"
