@@ -35,6 +35,7 @@ class Config:
         self.auto_jump: bool = bool(cfg_dict['auto_jump'])
         self.append_keys: str = str(cfg_dict['append_keys'])
         self.open_results: bool = bool(cfg_dict['open_results'])
+        self.hide_duplicates: bool = bool(cfg_dict['hide_duplicates'])
 
         if self.axis not in ('x', 'y'):
             print("Axis must be x or y, exiting")
@@ -72,13 +73,14 @@ def main():
             append_permutation: bool = True
             valid_permutation: Tuple[float, float, tuple]
 
-            for valid_permutation in valid_permutations:
-                if results_pos == valid_permutation[0] and results_speed == valid_permutation[1]:
-                    if len(permutation) < len(valid_permutation[2]):
-                        valid_permutations.remove(valid_permutation)
-                    else:
-                        append_permutation = False
-                        break
+            if cfg.hide_duplicates:
+                for valid_permutation in valid_permutations:
+                    if results_pos == valid_permutation[0] and results_speed == valid_permutation[1]:
+                        if len(permutation) < len(valid_permutation[2]):
+                            valid_permutations.remove(valid_permutation)
+                        else:
+                            append_permutation = False
+                            break
 
             if append_permutation:
                 valid_permutations.append((results_pos, results_speed, permutation))
@@ -91,7 +93,6 @@ def main():
         valid_permutations.sort(reverse=cfg.goal_direction == '+', key=lambda p: p[0])
 
     print("\nDone, outputting\n")
-    end_time = time.perf_counter()
 
     for valid_permutation in valid_permutations:
         perm_display: List[List[Union[int, str]]] = []
@@ -107,7 +108,7 @@ def main():
     print(f"\nIntended permutations: {cfg.permutations}")
     print(f"Generated permutations: {len(input_permutations)}")
     print(f"Shown permutations: {len(valid_permutations)}")
-    print(f"Processing time: {round(end_time - start_time, 3)} s\n")
+    print(f"Processing time: {round(time.perf_counter() - start_time, 3)} s\n")
 
     if cfg.open_results and platform.system() == 'Windows':
         os.startfile(sys.stdout.filename)

@@ -7,6 +7,7 @@ goal_direction: '-'  # - means approaching from the left/top, + is from the righ
 prioritize_speed: false  # sort by speed instead of position
 append_keys: ''  # keys the formatter adds, e.g. "jg" to hold jump and grab as well
 open_results: true  # automatically opens the results file in the default text editor
+hide_duplicates: true  # don't output multiple inputs with the same resulting pos/speed, disable to improve performance
 
 jump_timer: 0  # 11 if just jumped, 14 if wallbounced
 jump_speed: 0  # -105 if just jumped, -160 if wallbounced, irrelevant if jump timer = 0
