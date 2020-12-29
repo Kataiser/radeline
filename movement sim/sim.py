@@ -38,6 +38,7 @@ class Config:
         self.open_results: bool = bool(cfg_dict['open_results'])
         self.hide_duplicates: bool = bool(cfg_dict['hide_duplicates'])
         self.silent_output: bool = bool(cfg_dict['silent_output'])
+        self.triangular_random: bool = bool(cfg_dict['triangular_random'])
 
         if self.axis not in ('x', 'y'):
             print("Axis must be x or y, exiting")
@@ -239,6 +240,7 @@ def approach(val: float, target: float, max_move: float) -> float:
 
 def build_input_permutations(cfg: Config) -> tuple:
     input_permutations: Set[tuple] = set()
+    triangular: bool = cfg.triangular_random
 
     if cfg.axis == 'x':
         keys: Tuple[str, str, str] = ('l', '', 'r')
@@ -250,7 +252,11 @@ def build_input_permutations(cfg: Config) -> tuple:
         frame_counter = 0
 
         while frame_counter < cfg.frames:
-            frames = round(random.randint(1, cfg.frames - frame_counter))
+            if triangular:
+                frames = round(random.triangular(1, cfg.frames - frame_counter, 1))
+            else:
+                frames = round(random.randint(1, cfg.frames - frame_counter))
+
             frame_counter += frames
             inputs.append((frames, random.choice(keys)))
 
