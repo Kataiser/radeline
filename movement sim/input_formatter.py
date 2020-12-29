@@ -8,7 +8,7 @@ def main():
     # this is used to convert from a list of input tuples (e.g. [[2, 'r'], [4, 'l'], [3, '']]) to something that can just be pasted into studio
     # just copy a list from results.txt and it'll automatically become converted in your clipboard
 
-    print('auto formatter ready\n')
+    print('Auto formatter ready\n')
 
     while True:
         in_text_raw: str = clipboard.paste()

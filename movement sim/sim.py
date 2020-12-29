@@ -37,6 +37,7 @@ class Config:
         self.append_keys: str = str(cfg_dict['append_keys'])
         self.open_results: bool = bool(cfg_dict['open_results'])
         self.hide_duplicates: bool = bool(cfg_dict['hide_duplicates'])
+        self.silent_output: bool = bool(cfg_dict['silent_output'])
 
         if self.axis not in ('x', 'y'):
             print("Axis must be x or y, exiting")
@@ -96,7 +97,9 @@ def main():
     input_permutations_len: int = len(input_permutations)
     del input_permutations
     gc.collect()
+
     print("\nDone, outputting\n")
+    sys.stdout.print_enabled = not cfg.silent_output
 
     for valid_permutation in valid_permutations:
         perm_display: List[List[Union[int, str]]] = []
@@ -112,7 +115,10 @@ def main():
     valid_permutations_len: int = len(valid_permutations)
     del valid_permutations
     gc.collect()
-    print(f"\nIntended permutations: {cfg.permutations}")
+
+    print()
+    sys.stdout.print_enabled = True
+    print(f"Intended permutations: {cfg.permutations}")
     print(f"Generated permutations: {input_permutations_len}")
     print(f"Shown permutations: {valid_permutations_len}")
     print(f"Processing time: {round(time.perf_counter() - start_time, 3)} s\n")
@@ -258,18 +264,21 @@ def build_input_permutations(cfg: Config) -> tuple:
 # log all prints to a file
 class Logger(object):
     def __init__(self):
-        self.filename = 'results.txt'
+        self.filename: str = 'results.txt'
 
         if os.path.isfile(self.filename):
             os.remove(self.filename)
 
         self.terminal = sys.stdout
         self.log = open(self.filename, 'a')
+        self.print_enabled: bool = True
 
     def write(self, message):
-        self.terminal.write(message)
         self.log.write(message)
         self.log.flush()
+
+        if self.print_enabled:
+            self.terminal.write(message)
 
     def flush(self):
         pass
