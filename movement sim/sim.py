@@ -1,3 +1,4 @@
+import gc
 import math
 import os
 import platform
@@ -92,6 +93,9 @@ def main():
         valid_permutations.sort(reverse=True, key=lambda p: abs(p[1] - cfg.goal_speed))
         valid_permutations.sort(reverse=cfg.goal_direction == '+', key=lambda p: p[0])
 
+    input_permutations_len: int = len(input_permutations)
+    del input_permutations
+    gc.collect()
     print("\nDone, outputting\n")
 
     for valid_permutation in valid_permutations:
@@ -105,9 +109,12 @@ def main():
 
         print(f'{valid_permutation[:2]} {perm_display}')
 
+    valid_permutations_len: int = len(valid_permutations)
+    del valid_permutations
+    gc.collect()
     print(f"\nIntended permutations: {cfg.permutations}")
-    print(f"Generated permutations: {len(input_permutations)}")
-    print(f"Shown permutations: {len(valid_permutations)}")
+    print(f"Generated permutations: {input_permutations_len}")
+    print(f"Shown permutations: {valid_permutations_len}")
     print(f"Processing time: {round(time.perf_counter() - start_time, 3)} s\n")
 
     if cfg.open_results and platform.system() == 'Windows':
