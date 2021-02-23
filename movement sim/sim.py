@@ -48,9 +48,9 @@ class Config:
             raise SystemExit
 
         init_state = str(cfg_dict['init_state']).strip().split()
-        axis_index = 0 if self.axis == 'x' else 1
-        self.pos_init: float = float(init_state[1].split(',')[axis_index])
-        self.speed_init: float = float(init_state[3].split(',')[axis_index])
+        axis_offset = 0 if self.axis == 'x' else 1
+        self.pos_init: float = float(init_state[1 + axis_offset].rstrip(','))
+        self.speed_init: float = float(init_state[4 + axis_offset].rstrip(','))
 
 
 def main():
