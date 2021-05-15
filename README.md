@@ -7,12 +7,12 @@ Now includes a fully working movement simulator, for brute forcing precise posit
 
 ## Instructions
 1. Change `KeyStart` in `Saves\modsettings-CelesteTAS.celeste` to `- OemMinus`, because I couldn't get the default bind to work
-2. Make sure the inputs in Celeste.tas have a breakpoint on the very last line, a chapter restart at the beginning, and end on the chapter complete screen (or a S&Q)
+2. Make sure the inputs in your TAS have a breakpoint on the very last line, a chapter restart at the beginning, and end on the chapter complete screen (or a S&Q)
 3. If you're not using the `console load` start method, make sure the most recently run command in Celeste is the correct chapter load (ex. `load 4` or `rmx2 7`)
-4. Take a look at `settings.yaml` (it's just a text file) and make sure it's configured correctly
-5. Be careful with Celeste Studio because it doesn't read Radeline's changes to Celeste.tas and so you could easily accidentally overwrite it
+4. Take a look at `settings.yaml` (it's just a text file) and make sure it's configured like you want. The main thing is putting in the path to your TAS file.
+5. Be careful with Celeste Studio because it doesn't read Radeline's changes to your TAS and so you could easily accidentally overwrite it
 6. Install Python >= 3.6 (with pip and "Add python to environment variables" checked)
-7. (Optional) Install [Cython](https://pypi.org/project/Cython/) and run `build.bat`
+7. (Optional, kinda pointless tbh) Install [Cython](https://pypi.org/project/Cython/) and run `build.bat`
 8. Run `run.bat`
 
 ## Movement sim instructions
