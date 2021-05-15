@@ -9,7 +9,7 @@ import subprocess
 import sys
 import time
 import traceback
-from typing import Any, Dict, List, Sized, TextIO, Tuple, Union
+from typing import Any, Dict, List, Optional, Sized, TextIO, Union
 
 import keyboard
 import psutil
@@ -26,8 +26,8 @@ class Radeline:
 
         sys.stdout = Logger()
         validate_settings()
-        self.pids: Dict[str, Union[int, None]] = get_pids(init=True)
-        self.celeste_path: Union[str, None] = None
+        self.pids: Dict[str, Optional[int]] = get_pids(init=True)
+        self.celeste_path: Optional[str] = None
         self.improved_lines: List[int] = []
         self.improved_lines_formatted: str = ''
         self.frames_saved_total: int = 0
@@ -42,12 +42,12 @@ class Radeline:
         pause_key: str = settings()['pause_key']
         input_file_trims: List[int] = settings()['input_file_trims']
 
-        celeste_tas: List[str] = access_celeste_tas()
+        celeste_tas: List[str] = access_tas_file()
         celeste_tas_len: int = len(celeste_tas)  # keep the original length in case auto trim changes it
         while settings()['ensure_breakpoint_end'] and celeste_tas[-1] != '***':
-            print("Celeste.tas doesn't end with a breakpoint (***), pausing (press enter to retry)")
+            print("The TAS doesn't end with a breakpoint (***), pausing (press enter to retry)")
             input()
-            celeste_tas: List[str] = access_celeste_tas()
+            celeste_tas: List[str] = access_tas_file()
             celeste_tas_len: int = len(celeste_tas)
 
         # build a list of line numbers that are valid inputs
@@ -58,7 +58,7 @@ class Radeline:
                 celeste_tas = '\n\n'.join(celeste_tas_joined.split('\n\n')[:-1]).split('\n')  # good code, gamers
                 start_line_index: int = celeste_tas.index('#Start')
             else:
-                print("Couldn't find \"#Start\" in Celeste.tas, using input_file_trims instead of auto trimming")
+                print("Couldn't find \"#Start\" in the TAS, using input_file_trims instead of auto trimming")
                 start_line_index = 0
         else:
             start_line_index = 0
@@ -76,27 +76,27 @@ class Radeline:
                     for substring in ('#', 'play', 'console', 'read', 'skip', 'add', 'set', 'unsafe', 'enforceLegal', 'startexport', 'finishexport'):
                         if substring in line.lower():
                             line_valid = False
-                            
-                if line_valid:            
+
+                if line_valid:
                     valid_line_nums.append(possible_line[0])
 
         if settings()['auto_trim']:
-            print(f"Auto trimmed Celeste.tas to lines {valid_line_nums[0]}-{valid_line_nums[-1] + 2}")
+            print(f"Auto trimmed the TAS to lines {valid_line_nums[0]}-{valid_line_nums[-1] + 2}")
         else:
-            print(f"Trimmed Celeste.tas to lines {input_file_trims[0] + 1}-{celeste_tas_len - input_file_trims[1]}")
+            print(f"Trimmed the TAS to lines {input_file_trims[0] + 1}-{celeste_tas_len - input_file_trims[1]}")
 
         valid_line_nums = order_line_list(valid_line_nums)
 
         print(f"Starting in {self.initial_delay} seconds, switch to the Celeste window!")
         time.sleep(self.initial_delay)
 
-        # assumes that Celeste.tas is currently functional
+        # assumes that the TAS is currently functional
         self.keep_game_focused()
-        self.celeste_path = psutil.Process(self.pids['celeste']).cmdline()[0]
+        self.celeste_path = psutil.Process(self.pids['celeste']).cwd()
         print("Getting reference data")
         self.run_tas(pauseable=False)
 
-        self.target_data = parse_save_file()
+        self.target_data = self.parse_save_file()
         self.target_time = self.og_target_time = self.target_data['time']
         del self.target_data['time']
 
@@ -107,7 +107,7 @@ class Radeline:
         print(f"Target time is {format_time(self.target_time)} with data {self.target_data}")
 
         # perform the main operation
-        print(f"Beginning optimization of Celeste.tas ({celeste_tas_len} lines, {len(valid_line_nums)} inputs)\n"
+        print(f"Beginning optimization ({celeste_tas_len} lines, {len(valid_line_nums)} inputs)\n"
               f"Press {pause_key} to pause, and make sure to keep the Celeste window focused\n")
         time.sleep(settings()['loading_time_compensation'])
         self.reduce_lines(valid_line_nums)
@@ -137,16 +137,16 @@ class Radeline:
         if settings()['exit_game_when_done']:
             self.close_running_programs()
 
-        if settings()['open_celeste_tas_when_done'] and platform.system() == 'Windows':
-            print("Opening Celeste.tas")
-            os.startfile(os.path.join(settings()['celeste_path'], 'Celeste.tas'))
+        if settings()['open_tas_when_done'] and platform.system() == 'Windows':
+            print("Opening the TAS")
+            os.startfile(settings()['tas_path'])
 
     # subtract 1 from a line and test if that helped, reverting if it didn't
     def reduce_line(self, line_num: int, progess_percent: float, feather_adjust: int = 0) -> bool:
         print(f"({format(progess_percent, '.1f')}%){'*' if feather_adjust != 0 else ''} ", end='')
 
         # load this each time because it may have changed
-        celeste_tas: List[str] = access_celeste_tas()
+        celeste_tas: List[str] = access_tas_file()
 
         # split the line apart, subtract 1 from the frame number, and rebuild it
         original_line: str = celeste_tas[line_num]
@@ -165,19 +165,19 @@ class Radeline:
 
         print(f"Line {line_num + 1}/{len(celeste_tas)}: {line_clean} to {line_modified.lstrip(' ')[:-1]}")
 
-        # save Celeste.tas with the changed line
+        # save with the changed line
         celeste_tas[line_num] = line_modified
-        access_celeste_tas(write=celeste_tas)
+        access_tas_file(write=celeste_tas)
 
         # run with the changed line
         self.run_tas(pauseable=True)
-        new_data: dict = parse_save_file()
+        new_data: dict = self.parse_save_file()
         new_time: int = new_data['time']
         del new_data['time']
 
         if new_time == 0:
-            frames_saved: Union[int, None] = None
-            frames_lost: Union[int, None] = None
+            frames_saved: Optional[int] = None
+            frames_lost: Optional[int] = None
         else:
             frames_saved = compare_timecode_frames(self.target_time, new_time)
             frames_lost = compare_timecode_frames(new_time, self.target_time)
@@ -205,7 +205,7 @@ class Radeline:
         else:
             # revert and save
             celeste_tas[line_num] = original_line
-            access_celeste_tas(write=celeste_tas)
+            access_tas_file(write=celeste_tas)
             optimize_feathers = settings()['optimize_feathers'] and 'F,' in line_clean and feather_adjust == 0
             saved_time = False
 
@@ -234,10 +234,8 @@ class Radeline:
 
     # simulate keypresses to run the last debug command, run the TAS, and wait a bit
     def run_tas(self, pauseable: bool):
-        consecutive: int = settings()['session_consecutive']
         interval: float = float(settings()['session_interval'])
         timeout: float = float(settings()['session_timeout'])
-        pos_history: List[Tuple[str, str]] = []
         tas_has_finished: bool = False
 
         self.paused = False
@@ -274,20 +272,16 @@ class Radeline:
             if current_time - last_request_time >= interval:
                 try:
                     # just ask the game when the TAS has finished lol
-                    session_data: List[str] = requests.get('http://localhost:32270/session').text.split('\r\n')
+                    session_data: str = requests.get('http://localhost:32270/tas/info').text
                 except requests.ConnectionError:
                     # the game probably crashed
                     self.restart_game()
                     tas_has_finished = True
                 else:
-                    pos_history.append((session_data[4], session_data[5]))  # x and y
-                    last_request_time = current_time
+                    tas_has_finished = session_data.split("Running")[1].split('<')[0] == ': False'
 
-                    if session_data[2] == 'Level: ':
-                        tas_has_finished = True
-                        time.sleep(settings()['session_menus_wait'])
-                    else:
-                        tas_has_finished = (len(pos_history) > consecutive * 2 and len(set(pos_history[-consecutive:])) == 1)
+                    if tas_has_finished:
+                        time.sleep(settings()['session_wait'])
 
             if tas_has_finished or current_time - start_time > timeout:  # just in case the server based detection fails somehow
                 break
@@ -295,7 +289,7 @@ class Radeline:
     # perform reduce_line() for a list of line numbers
     def reduce_lines(self, lines: List[int]):
         for line_enum in enumerate(lines):
-            self.keep_game_focused()  # do this before everything to keep both Celeste.tas and the output clean
+            self.keep_game_focused()  # do this before everything to keep both the TAS and the output clean
 
             progress: float = (line_enum[0] / (len(lines) - 1)) * 100
             self.reduce_line(line_enum[1], progress)
@@ -326,7 +320,7 @@ class Radeline:
                 self.close_running_programs(include_notepads=True)
                 og_cwd = os.getcwd()
                 os.chdir(os.path.dirname(self.celeste_path))
-                subprocess.Popen(self.celeste_path, creationflags=0x00000010)  # the creationflag is for not waiting until the process exits
+                subprocess.Popen(f'{self.celeste_path}.exe', creationflags=0x00000010)  # the creationflag is for not waiting until the process exits
                 time.sleep(settings()['restart_postwait'])
                 os.chdir(og_cwd)
                 self.pids = get_pids()
@@ -358,36 +352,35 @@ class Radeline:
                 except (psutil.AccessDenied, psutil.NoSuchProcess):
                     pass
 
+    # read chapter time and current level (room) from debug.celeste
+    def parse_save_file(self) -> dict:
+        try:
+            with open(os.path.join(self.celeste_path, 'saves', 'debug.celeste'), 'r') as save_file:
+                save_file_read = save_file.read()
+        except PermissionError:
+            time.sleep(2)
+            with open(os.path.join(self.celeste_path, 'saves', 'debug.celeste'), 'r') as save_file:
+                save_file_read = save_file.read()
 
-# read chapter time and current level (room) from debug.celeste
-def parse_save_file() -> dict:
-    try:
-        with open(os.path.join(settings()['celeste_path'], 'saves', 'debug.celeste'), 'r') as save_file:
-            save_file_read = save_file.read()
-    except PermissionError:
-        time.sleep(2)
-        with open(os.path.join(settings()['celeste_path'], 'saves', 'debug.celeste'), 'r') as save_file:
-            save_file_read = save_file.read()
+        parsed: dict = {}
+        soup: BeautifulSoup = BeautifulSoup(save_file_read, 'lxml')
 
-    parsed: dict = {}
-    soup: BeautifulSoup = BeautifulSoup(save_file_read, 'lxml')
+        currentsession = soup.find('currentsession_safe')
+        if currentsession is None:
+            currentsession = soup.find('currentsession')
+        if currentsession is None:
+            print("Couldn't find a CurrentSession tag in debug.celeste, guess the game broke? IDK, exiting anyway")
 
-    currentsession = soup.find('currentsession_safe')
-    if currentsession is None:
-        currentsession = soup.find('currentsession')
-    if currentsession is None:
-        print("Couldn't find a CurrentSession tag in debug.celeste, guess the game broke? IDK, exiting anyway")
+        parsed['time'] = int(currentsession.get('time'))
+        parsed['room'] = currentsession.get('level')
+        parsed['cassette'] = currentsession.get('cassette')
+        parsed['heart'] = currentsession.get('heartgem')
+        parsed['keys'] = len(soup.find_all('keys')[0].find_all('entityid'))
 
-    parsed['time'] = int(currentsession.get('time'))
-    parsed['room'] = currentsession.get('level')
-    parsed['cassette'] = currentsession.get('cassette')
-    parsed['heart'] = currentsession.get('heartgem')
-    parsed['keys'] = len(soup.find_all('keys')[0].find_all('entityid'))
+        totalstrawberries = soup.find('totalstrawberries')
+        parsed['berries'] = int(totalstrawberries.text)
 
-    totalstrawberries = soup.find('totalstrawberries')
-    parsed['berries'] = int(totalstrawberries.text)
-
-    return parsed
+        return parsed
 
 
 # convert the weird timecodes Celeste uses into a readable format
@@ -423,17 +416,22 @@ def compare_timecode_frames(timecode_1: int, timecode_2: int) -> int:
             return round(ms_1 / 17) + round((1000 - ms_2) / 17)
 
 
-def access_celeste_tas(write: List[str] = None):
-    with open(os.path.join(settings()['celeste_path'], 'Celeste.tas'), 'r+') as celeste_tas_file:
-        if write:
-            celeste_tas_file.write(''.join(write))
-        else:
-            return celeste_tas_file.readlines()
+def access_tas_file(write: List[str] = None) -> Optional[List[str]]:
+    while True:
+        try:
+            with open(settings()['tas_path'], 'r+') as celeste_tas_file:
+                if write:
+                    celeste_tas_file.write(''.join(write))
+                    return
+                else:
+                    return celeste_tas_file.readlines()
+        except PermissionError:
+            time.sleep(0.5)
 
 
 # get the process IDs for Celeste and Studio
-def get_pids(silent: bool = False, init: bool = False, allow_exit: bool = True) -> Dict[str, Union[int, None]]:
-    found_pids: Dict[str, Union[int, None]] = {'celeste': None, 'studio': None}
+def get_pids(silent: bool = False, init: bool = False, allow_exit: bool = True) -> Dict[str, Optional[int]]:
+    found_pids: Dict[str, Optional[int]] = {'celeste': None, 'studio': None}
 
     # https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/tasklist
     try:
@@ -493,18 +491,16 @@ def validate_settings():
         print(f"Couldn't parse settings:\n    {error_tabbed}")
         raise SystemExit
 
-    celeste_path: str = str(settings()['celeste_path'])
-    bool_settings = ('exit_game_when_done', 'clear_output_log_on_startup', 'open_celeste_tas_when_done', 'extra_attempts', 'keep_celeste_focused',
+    tas_path: str = str(settings()['tas_path'])
+    bool_settings = ('exit_game_when_done', 'clear_output_log_on_startup', 'open_tas_when_done', 'extra_attempts', 'keep_celeste_focused',
                      'console_load_mode', 'ensure_breakpoint_end', 'auto_trim', 'restart_crashed_game', 'kill_notepads', 'optimize_feathers')
-    int_settings = ('extra_attempts_window_size', 'session_consecutive', 'feather_degree_window_size')
-    num_settings = ('initial_delay_time', 'loading_time_compensation', 'focus_wait_timeout', 'session_timeout', 'session_interval', 'restart_prewait', 'restart_postwait',
-                    'session_menus_wait')  # int or float
+    int_settings = ('extra_attempts_window_size', 'feather_degree_window_size')
+    num_settings = ('initial_delay_time', 'loading_time_compensation', 'focus_wait_timeout', 'session_timeout', 'session_interval', 'restart_prewait',
+                    'restart_postwait', 'session_wait')  # int or float
 
     # makes sure that each setting is what type it needs to be, and some other checks as well
-    if not os.path.isdir(celeste_path):
-        invalid_setting(f"\"{celeste_path}\" doesn't exist")
-    if 'Celeste.exe' not in os.listdir(celeste_path):
-        invalid_setting(f"\"{celeste_path}\" is not a valid Celeste installation")
+    if not os.path.isfile(tas_path):
+        invalid_setting(f"TAS file \"{tas_path}\" doesn't exist")
     for bool_setting in bool_settings:
         if not isinstance(settings()[bool_setting], bool):
             invalid_setting(f"\"{bool_setting}\" is not either true or false")

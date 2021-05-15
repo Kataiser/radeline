@@ -1,17 +1,17 @@
 ---
-celeste_path: C:\Program Files (x86)\Steam\steamapps\common\Celeste
+tas_path: C:\Program Files (x86)\Steam\steamapps\common\Celeste\Celeste.tas
 clear_output_log_on_startup: true
 ensure_breakpoint_end: true
 
-# How many lines to trim off the start and end respectively of Celeste.tas
+# How many lines to trim off the start and end respectively of the file
 # Useful for ignoring chapter restarts, S&Qs, getting to the chapter complete screen, etc.
 # Note that this doesn't actually edit the file, just what Radeline uses
 input_file_trims:
-  - 7
-  - 1
+  - 0
+  - 0
 
 # Ignore the above setting and just trim based on "#Start" and the last empty line in the file
-auto_trim: false
+auto_trim: true
 
 # When starting the program or unpausing, wait this many seconds to give time for switching focus to Celeste
 initial_delay_time: 5
@@ -40,7 +40,7 @@ loading_time_compensation: 0
 exit_game_when_done: true
 
 # Make sure that .tas files are assigned to a text editor (Windows only)
-open_celeste_tas_when_done: true
+open_tas_when_done: true
 
 # Do some extra optimization attempts when done
 extra_attempts: true
@@ -52,14 +52,13 @@ focus_wait_timeout: 3
 
 # Used to track if the TAS is still running, using Everest's DebugRC server
 # Don't touch unless you know what you're doing (ask Kataiser if you're having problems)
-session_consecutive: 4
-session_interval: 0.35
-session_menus_wait: 1
+session_interval: 0.5
+session_wait: 2
 session_timeout: 40
 
 # It's possible for the game to crash if you load custom maps too many times,
 # so these are for trying to deal with that (waits are in seconds)
 restart_crashed_game: true
 restart_prewait: 15
-restart_postwait: 30
+restart_postwait: 60
 kill_notepads: true
