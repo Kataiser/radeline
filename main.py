@@ -172,8 +172,12 @@ class Radeline:
         # run with the changed line
         self.run_tas(pauseable=True)
         new_data: dict = self.parse_save_file()
-        new_time: int = new_data['time']
-        del new_data['time']
+
+        if new_data:
+            new_time: int = new_data['time']
+            del new_data['time']
+        else:
+            return False  # skip line in case of debug.celeste errors
 
         if new_time == 0:
             frames_saved: Optional[int] = None
@@ -235,7 +239,8 @@ class Radeline:
     # simulate keypresses to run the last debug command, run the TAS, and wait a bit
     def run_tas(self, pauseable: bool):
         interval: float = float(settings()['session_interval'])
-        timeout: float = float(settings()['session_timeout'])
+        short_timeout: float = float(settings()['session_short_timeout'])
+        long_timeout: float = float(settings()['session_long_timeout'])
         tas_has_finished: bool = False
 
         self.paused = False
@@ -272,7 +277,7 @@ class Radeline:
             if current_time - last_request_time >= interval:
                 try:
                     # just ask the game when the TAS has finished lol
-                    session_data: str = requests.get('http://localhost:32270/tas/info').text
+                    session_data: str = requests.get('http://localhost:32270/tas/info', timeout=short_timeout).text
                 except requests.ConnectionError:
                     # the game probably crashed
                     self.restart_game()
@@ -283,7 +288,7 @@ class Radeline:
                     if tas_has_finished:
                         time.sleep(settings()['session_wait'])
 
-            if tas_has_finished or current_time - start_time > timeout:  # just in case the server based detection fails somehow
+            if tas_has_finished or current_time - start_time > long_timeout:  # just in case the server based detection fails somehow
                 break
 
     # perform reduce_line() for a list of line numbers
@@ -320,7 +325,7 @@ class Radeline:
                 self.close_running_programs(include_notepads=True)
                 og_cwd = os.getcwd()
                 os.chdir(os.path.dirname(self.celeste_path))
-                subprocess.Popen(f'{self.celeste_path}.exe', creationflags=0x00000010)  # the creationflag is for not waiting until the process exits
+                subprocess.Popen(f'{self.celeste_path}\\Celeste.exe', creationflags=0x00000010)  # the creationflag is for not waiting until the process exits
                 time.sleep(settings()['restart_postwait'])
                 os.chdir(og_cwd)
                 self.pids = get_pids()
@@ -361,6 +366,9 @@ class Radeline:
             time.sleep(2)
             with open(os.path.join(self.celeste_path, 'saves', 'debug.celeste'), 'r') as save_file:
                 save_file_read = save_file.read()
+        except FileNotFoundError:
+            print("Can't find debug.celeste, skipping line")
+            return {}
 
         parsed: dict = {}
         soup: BeautifulSoup = BeautifulSoup(save_file_read, 'lxml')
@@ -369,7 +377,8 @@ class Radeline:
         if currentsession is None:
             currentsession = soup.find('currentsession')
         if currentsession is None:
-            print("Couldn't find a CurrentSession tag in debug.celeste, guess the game broke? IDK, exiting anyway")
+            print("Couldn't find a CurrentSession tag in debug.celeste, guess the game broke? IDK, skipping line anyway")
+            return {}
 
         parsed['time'] = int(currentsession.get('time'))
         parsed['room'] = currentsession.get('level')
@@ -491,11 +500,12 @@ def validate_settings():
         print(f"Couldn't parse settings:\n    {error_tabbed}")
         raise SystemExit
 
+    setting_count: int = 26
     tas_path: str = str(settings()['tas_path'])
     bool_settings = ('exit_game_when_done', 'clear_output_log_on_startup', 'open_tas_when_done', 'extra_attempts', 'keep_celeste_focused',
                      'console_load_mode', 'ensure_breakpoint_end', 'auto_trim', 'restart_crashed_game', 'kill_notepads', 'optimize_feathers')
     int_settings = ('extra_attempts_window_size', 'feather_degree_window_size')
-    num_settings = ('initial_delay_time', 'loading_time_compensation', 'focus_wait_timeout', 'session_timeout', 'session_interval', 'restart_prewait',
+    num_settings = ('initial_delay_time', 'loading_time_compensation', 'focus_wait_timeout', 'session_short_timeout', 'session_long_timeout', 'session_interval', 'restart_prewait',
                     'restart_postwait', 'session_wait')  # int or float
 
     # makes sure that each setting is what type it needs to be, and some other checks as well
@@ -523,6 +533,8 @@ def validate_settings():
         keyboard.key_to_scan_codes(settings()['pause_key'])
     except ValueError:
         invalid_setting("\"pause_key\" is not a valid key")
+    if len(settings()) != setting_count:
+        invalid_setting(f"Wrong number of settings ({len(settings())} != {setting_count})")
 
 
 def invalid_setting(error_message: str):

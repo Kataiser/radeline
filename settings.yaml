@@ -2,6 +2,7 @@
 tas_path: C:\Program Files (x86)\Steam\steamapps\common\Celeste\Celeste.tas
 clear_output_log_on_startup: true
 ensure_breakpoint_end: true
+exit_game_when_done: true
 
 # How many lines to trim off the start and end respectively of the file
 # Useful for ignoring chapter restarts, S&Qs, getting to the chapter complete screen, etc.
@@ -36,9 +37,6 @@ feather_degree_window_size: 2
 # so wait this many seconds for that (5 is recommended)
 loading_time_compensation: 0
 
-# Also closes Studio if it's open
-exit_game_when_done: true
-
 # Make sure that .tas files are assigned to a text editor (Windows only)
 open_tas_when_done: true
 
@@ -52,9 +50,10 @@ focus_wait_timeout: 3
 
 # Used to track if the TAS is still running, using Everest's DebugRC server
 # Don't touch unless you know what you're doing (ask Kataiser if you're having problems)
-session_interval: 0.5
+session_interval: 1
 session_wait: 2
-session_timeout: 40
+session_short_timeout: 2
+session_long_timeout: 40
 
 # It's possible for the game to crash if you load custom maps too many times,
 # so these are for trying to deal with that (waits are in seconds)
