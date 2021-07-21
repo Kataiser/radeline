@@ -326,6 +326,7 @@ class Radeline:
                 og_cwd = os.getcwd()
                 os.chdir(os.path.dirname(self.celeste_path))
                 subprocess.Popen(f'{self.celeste_path}\\Celeste.exe', creationflags=0x00000010)  # the creationflag is for not waiting until the process exits
+                subprocess.Popen(f'{self.celeste_path}\\Celeste Studio.exe', creationflags=0x00000010)  # the creationflag is for not waiting until the process exits
                 time.sleep(settings()['restart_postwait'])
                 os.chdir(og_cwd)
                 self.pids = get_pids()
@@ -460,7 +461,7 @@ def get_pids(silent: bool = False, init: bool = False, allow_exit: bool = True) 
         elif 'studio' in process_name.lower() and 'celeste' in process_name.lower():
             found_pids['studio'] = process_pid
 
-    if allow_exit and not found_pids['celeste']:
+    if allow_exit and len(found_pids) != 2:
         if not init:
             print("")
 
@@ -468,10 +469,7 @@ def get_pids(silent: bool = False, init: bool = False, allow_exit: bool = True) 
         raise SystemExit
 
     if not silent:
-        if found_pids['studio']:
-            print("Found Celeste.exe and Celeste.Studio.exe")
-        else:
-            print("Found Celeste.exe")
+        print("Found Celeste.exe and Celeste Studio.exe")
 
     return found_pids
 
