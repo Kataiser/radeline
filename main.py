@@ -394,7 +394,7 @@ class Radeline:
 
 
 # convert the weird timecodes Celeste uses into a readable format
-@functools.lru_cache(maxsize=None)
+@functools.cache
 def format_time(timecode: int) -> str:
     timecode_str: str = str(timecode)
 
@@ -409,7 +409,7 @@ def format_time(timecode: int) -> str:
 
 
 # find the difference between two timecodes, in frames (timecode_1 - timecode_2, assumes < 1 second diff)
-@functools.lru_cache(maxsize=None)
+@functools.cache
 def compare_timecode_frames(timecode_1: int, timecode_2: int) -> int:
     if timecode_1 == timecode_2:
         return 0
@@ -426,15 +426,26 @@ def compare_timecode_frames(timecode_1: int, timecode_2: int) -> int:
             return round(ms_1 / 17) + round((1000 - ms_2) / 17)
 
 
+# read or write to the chosen TAS file
 def access_tas_file(write: List[str] = None) -> Optional[List[str]]:
     while True:
         try:
-            with open(settings()['tas_path'], 'r+') as celeste_tas_file:
+            path: str = settings()['tas_path']
+
+            if not os.path.isfile(path):
+                print(f"The TAS path you entered ({path}) doesn't seem to exist, exiting")
+
+            with open(path, 'r+') as celeste_tas_file:
                 if write:
                     celeste_tas_file.write(''.join(write))
                     return
                 else:
-                    return celeste_tas_file.readlines()
+                    tas_file_lines: List[str] = celeste_tas_file.readlines()
+
+            if tas_file_lines:
+                return tas_file_lines
+            else:
+                print(f"The TAS path you entered ({path}) seems to be empty, exiting")
         except PermissionError:
             time.sleep(0.5)
 
@@ -547,7 +558,7 @@ def pluralize(count: Union[int, Sized]) -> str:
         return 's' if len(count) != 1 else ''
 
 
-@functools.lru_cache(maxsize=1)
+@functools.cache
 def settings() -> Dict[str, Any]:
     with open('settings.yaml', 'r') as settings_file:
         return yaml.safe_load(settings_file)
