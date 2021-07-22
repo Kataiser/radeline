@@ -326,7 +326,6 @@ class Radeline:
                 og_cwd = os.getcwd()
                 os.chdir(os.path.dirname(self.celeste_path))
                 subprocess.Popen(f'{self.celeste_path}\\Celeste.exe', creationflags=0x00000010)  # the creationflag is for not waiting until the process exits
-                subprocess.Popen(f'{self.celeste_path}\\Celeste Studio.exe', creationflags=0x00000010)  # the creationflag is for not waiting until the process exits
                 time.sleep(settings()['restart_postwait'])
                 os.chdir(og_cwd)
                 self.pids = get_pids()
