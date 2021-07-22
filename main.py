@@ -73,7 +73,7 @@ class Radeline:
                 if line.strip() == '' or possible_line[0] <= start_line_index:
                     line_valid = False
                 else:
-                    for substring in ('#', 'play', 'console', 'read', 'skip', 'add', 'set', 'unsafe', 'enforceLegal', 'startexport', 'finishexport'):
+                    for substring in ('#', '***', 'play', 'console', 'read', 'skip', 'add', 'set', 'unsafe', 'enforceLegal', 'startexport', 'finishexport'):
                         if substring in line.lower():
                             line_valid = False
 
@@ -489,13 +489,10 @@ def get_pids(silent: bool = False, init: bool = False, allow_exit: bool = True) 
 def order_line_list(lines: List[int]) -> List[int]:
     order: str = settings()['order']
 
-    if order == 'forward':
-        lines.sort()
-    elif order == 'reverse':
-        lines.sort()
-        lines.reverse()
-    elif order == 'random':
+    if order == 'random':
         random.shuffle(lines)
+    else:
+        lines.sort(reverse=order == 'reverse')
 
     return lines
 
