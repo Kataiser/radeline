@@ -1,7 +1,7 @@
-frames: 15
+frames: 12
 permutations: 1000000
 axis: 'x'  # which axis to process, x or y
-goal_position: 160
+goal_position: 160.5
 goal_speed: 90  # this is calculated by |final speed - goal speed|
 goal_direction: '-'  # - means approaching from the left/top, + is from the right/bottom
 prioritize_speed: false  # sort by speed instead of position
@@ -23,10 +23,10 @@ in_space: false
 
 # use control-shift-C in Studio and paste here
 init_state: "
-Pos: 160.458372503519,67.7499865889549
-Speed: 0.00,-15.00
-Vel: 0.00,0.00
+Pos: 160.458372503519, 67.7499865889549
+Speed: 0.00, -15.00
+Vel: 0.00, 0.00
 Stamina: 110 Timer: 16.609
-Dash 
+Dash
 [1]
 "

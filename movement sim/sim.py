@@ -1,4 +1,5 @@
 import gc
+import itertools
 import math
 import os
 import platform
@@ -57,8 +58,15 @@ def main():
     start_time = time.perf_counter()
     sys.stdout = Logger()
     cfg: Config = Config()
-    print("Building permutations...")
-    input_permutations: tuple = build_input_permutations(cfg)
+    use_sequential: bool = cfg.frames <= 13
+
+    if use_sequential:
+        print("Building permutations using sequential method...")
+        input_permutations: Union[List[tuple], Set[tuple]] = build_input_permutations_sequential(cfg)
+    else:
+        print("Building permutations using RNG method...")
+        input_permutations = build_input_permutations_rng(cfg)
+
     valid_permutations: List[Tuple[float, float, tuple]] = []
     permutation: tuple
     print("\nSimulating inputs...")
@@ -119,7 +127,8 @@ def main():
 
     print()
     sys.stdout.print_enabled = True
-    print(f"Intended permutations: {cfg.permutations}")
+    if not use_sequential:
+        print(f"Intended permutations: {cfg.permutations}")
     print(f"Generated permutations: {input_permutations_len}")
     print(f"Shown permutations: {valid_permutations_len}")
     print(f"Processing time: {round(time.perf_counter() - start_time, 3)} s\n")
@@ -238,14 +247,34 @@ def approach(val: float, target: float, max_move: float) -> float:
         return max(val - max_move, target)
 
 
-def build_input_permutations(cfg: Config) -> tuple:
+def build_input_permutations_sequential(cfg: Config) -> List[tuple]:
+    input_permutations: List[tuple] = []
+    keys: Tuple[str, str, str] = ('l', '', 'r') if cfg.axis == 'x' else ('j', '', 'd')
+    permutation_count: int = 3 ** cfg.frames
+
+    for permutation in tqdm.tqdm(itertools.product(keys, repeat=cfg.frames), total=permutation_count, ncols=100):
+        permutation_formatted: List[Tuple[int, str]] = []
+        current_input: str = permutation[0]
+        input_len: int = 0
+
+        for frame_key in permutation:
+            if frame_key == current_input:
+                input_len += 1
+            else:
+                permutation_formatted.append((input_len, current_input))
+                current_input = frame_key
+                input_len = 1
+
+        permutation_formatted.append((input_len, current_input))
+        input_permutations.append(tuple(permutation_formatted))
+
+    return input_permutations
+
+
+def build_input_permutations_rng(cfg: Config) -> Set[tuple]:
     input_permutations: Set[tuple] = set()
     triangular: bool = cfg.triangular_random
-
-    if cfg.axis == 'x':
-        keys: Tuple[str, str, str] = ('l', '', 'r')
-    else:
-        keys = ('j', '', 'd')
+    keys: Tuple[str, str, str] = ('l', '', 'r') if cfg.axis == 'x' else ('j', '', 'd')
 
     for _ in tqdm.tqdm(range(cfg.permutations), ncols=100):
         inputs: List[Tuple[int, str]] = []
@@ -262,9 +291,7 @@ def build_input_permutations(cfg: Config) -> tuple:
 
         input_permutations.add(tuple(inputs))
 
-    input_permutations_tuple: tuple = tuple(input_permutations)
-    del input_permutations
-    return input_permutations_tuple
+    return input_permutations
 
 
 # log all prints to a file
