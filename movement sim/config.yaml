@@ -7,6 +7,7 @@ goal_direction: '-'  # - means approaching from the left/top, + is from the righ
 prioritize_speed: false  # sort by speed instead of position
 append_keys: ''  # keys the formatter adds, e.g. "jg" to hold jump and grab as well
 open_results: true  # automatically opens the results file in the default text editor
+rng_threshold: 14  # frame count to start using the RNG method
 
 hide_duplicates: true  # don't output multiple inputs with the same resulting pos/speed (disable for performance)
 silent_output: false  # enable to save inputs directly to the file, skipping console (enable for performance)

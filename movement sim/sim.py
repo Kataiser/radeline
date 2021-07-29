@@ -40,6 +40,7 @@ class Config:
         self.hide_duplicates: bool = bool(cfg_dict['hide_duplicates'])
         self.silent_output: bool = bool(cfg_dict['silent_output'])
         self.triangular_random: bool = bool(cfg_dict['triangular_random'])
+        self.rng_threshold: int = int(cfg_dict['rng_threshold'])
 
         if self.axis not in ('x', 'y'):
             print("Axis must be x or y, exiting")
@@ -58,7 +59,7 @@ def main():
     start_time = time.perf_counter()
     sys.stdout = Logger()
     cfg: Config = Config()
-    use_sequential: bool = cfg.frames <= 13
+    use_sequential: bool = cfg.frames < cfg.rng_threshold
 
     if use_sequential:
         print("Building permutations using sequential method...")
