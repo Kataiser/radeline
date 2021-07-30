@@ -174,7 +174,7 @@ def sim_x(inputs: tuple, cfg: Config) -> Tuple[float, float]:
 def sim_y(inputs: tuple, cfg: Config) -> Tuple[float, float]:
     y: float = cfg.pos_init
     speed_y: float = cfg.speed_init
-    max_fall: float = 160.0
+    max_fall: float = max(160.0, cfg.speed_init)
     jump_timer: int = cfg.jump_timer
     input_line: Tuple[int, str]
 
@@ -220,7 +220,7 @@ def approach(val: float, target: float, max_move: float) -> float:
 
 def build_input_permutations_sequential(cfg: Config) -> List[tuple]:
     input_permutations: List[tuple] = []
-    keys: Tuple[str, str, str] = ('l', '', 'r') if cfg.axis == 'x' else ('j', '', 'd')
+    keys: Tuple[str, str, str] = ('', 'r', 'l') if cfg.axis == 'x' else ('', 'd', 'j')
     permutation_count: int = 3 ** cfg.frames
     permutation: Tuple[str, ...]
 
