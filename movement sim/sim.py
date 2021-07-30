@@ -276,15 +276,12 @@ def build_input_permutations_rng(cfg: Config) -> Set[tuple]:
 
 
 def x_axis_generated_keys(cfg: Config) -> Tuple[str, ...]:
-    if cfg.axis == 'x':
-        if cfg.disabled_x_key == 'l':
-            return '', 'r'
-        elif cfg.disabled_x_key == 'r':
-            return '', 'l'
-        else:
-            return 'l', '', 'r'
+    if cfg.disabled_x_key == 'l':
+        return '', 'r'
+    elif cfg.disabled_x_key == 'r':
+        return '', 'l'
     else:
-        return 'j', '', 'd'
+        return '', 'r', 'l'
 
 
 # log all prints to a file
