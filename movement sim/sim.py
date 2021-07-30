@@ -29,11 +29,8 @@ class Config:
         self.goal_direction: str = str(cfg_dict['goal_direction'])
         self.goal_speed: float = float(cfg_dict['goal_speed'])
         self.prioritize_speed: bool = bool(cfg_dict['prioritize_speed'])
-        self.ducking: bool = bool(cfg_dict['ducking'])
         self.on_ground: bool = bool(cfg_dict['on_ground'])
-        self.cold_core: bool = bool(cfg_dict['cold_core'])
         self.holding: bool = bool(cfg_dict['holding'])
-        self.in_space: bool = bool(cfg_dict['in_space'])
         self.auto_jump: bool = bool(cfg_dict['auto_jump'])
         self.append_keys: str = str(cfg_dict['append_keys'])
         self.open_results: bool = bool(cfg_dict['open_results'])
@@ -132,7 +129,7 @@ def main():
         print(f"Intended permutations: {cfg.permutations}")
     print(f"Generated permutations: {input_permutations_len}")
     print(f"Shown permutations: {valid_permutations_len}")
-    print(f"Processing time: {round(time.perf_counter() - start_time, 3)} s\n")
+    print(f"Processing time: {round(time.perf_counter() - start_time, 1)} s\n")
 
     if cfg.open_results and platform.system() == 'Windows':
         os.startfile(sys.stdout.filename)
@@ -145,6 +142,12 @@ def sim_x(inputs: tuple, cfg: Config) -> Tuple[float, float]:
     x: float = cfg.pos_init
     speed_x: float = cfg.speed_init
     input_line: Tuple[int, str]
+    mult: float = 1.0 if cfg.on_ground else 0.65
+
+    if cfg.holding:
+        max_: float = 70.0
+    else:
+        max_ = 90.0
 
     for input_line in inputs:
         input_frames: List[str] = [input_line[1]] * input_line[0]
@@ -157,28 +160,10 @@ def sim_x(inputs: tuple, cfg: Config) -> Tuple[float, float]:
             move_x: float = {'l': -1.0, '': 0.0, 'r': 1.0}[input_key]
 
             # calculate speed second
-            if cfg.ducking and cfg.on_ground:
-                speed_x = approach(speed_x, 0.0, 500.0 / 60.0)
+            if abs(speed_x) <= max_ or (0.0 if speed_x == 0.0 else float(math.copysign(1, speed_x))) != move_x:
+                speed_x = approach(speed_x, max_ * move_x, 1000.0 / 60.0 * mult)
             else:
-                mult: float = 1.0 if cfg.on_ground else 0.65
-
-                if cfg.on_ground and cfg.cold_core:
-                    mult *= 0.3
-
-                # ignored low friction variant stuff
-
-                if cfg.holding:
-                    max_: float = 70.0
-                else:
-                    max_ = 90.0
-
-                if cfg.in_space:
-                    max_ *= 0.6
-
-                if abs(speed_x) <= max_ or (0.0 if speed_x == 0.0 else float(math.copysign(1, speed_x))) != move_x:
-                    speed_x = approach(speed_x, max_ * move_x, 1000.0 / 60.0 * mult)
-                else:
-                    speed_x = approach(speed_x, max_ * move_x, 400.0 / 60.0 * mult)
+                speed_x = approach(speed_x, max_ * move_x, 400.0 / 60.0 * mult)
 
             # calculate position third
             x += speed_x / 60.0
@@ -202,33 +187,18 @@ def sim_y(inputs: tuple, cfg: Config) -> Tuple[float, float]:
 
             # get inputs first
             move_y: int = {'j': 0, '': 0, 'd': 1}[input_key]
-            jumping: bool = input_key == 'j'
 
             # calculate speed second
-            mf: float = 160.0
-            fmf: float = 240.0
-
-            if cfg.in_space:
-                mf *= 0.6
-                fmf *= 0.6
-
-            # ignored some weird holdable stuff
-
-            if move_y == 1 and speed_y >= mf:
-                max_fall = approach(max_fall, fmf, 300.0 / 60.0)
+            if move_y == 1 and speed_y >= 160.0:
+                max_fall = approach(max_fall, 240.0, 300.0 / 60.0)
             else:
-                max_fall = approach(max_fall, mf, 300.0 / 60.0)
+                max_fall = approach(max_fall, 160.0, 300.0 / 60.0)
 
-            # this line was kinda translated more using my experience from TASing than from actually translating the code so it may be wrong
-            mult: float = 0.5 if (abs(speed_y) <= 40.0 and (jumping or cfg.auto_jump)) else 1.0
-
-            if cfg.in_space:
-                mult *= 0.6
-
+            mult: float = 0.5 if (abs(speed_y) <= 40.0 and (input_key == 'j' or cfg.auto_jump)) else 1.0
             speed_y = approach(speed_y, max_fall, (900.0 * mult) / 60.0)
 
             if jump_timer > 0:
-                if cfg.auto_jump or jumping:
+                if input_key == 'j' or cfg.auto_jump:
                     speed_y = min(speed_y, cfg.jump_speed)
                 else:
                     jump_timer = 0
@@ -252,11 +222,14 @@ def build_input_permutations_sequential(cfg: Config) -> List[tuple]:
     input_permutations: List[tuple] = []
     keys: Tuple[str, str, str] = ('l', '', 'r') if cfg.axis == 'x' else ('j', '', 'd')
     permutation_count: int = 3 ** cfg.frames
+    permutation: Tuple[str, ...]
 
+    # permutation: object
     for permutation in tqdm.tqdm(itertools.product(keys, repeat=cfg.frames), total=permutation_count, ncols=100):
         permutation_formatted: List[Tuple[int, str]] = []
         current_input: str = permutation[0]
         input_len: int = 0
+        frame_key: str
 
         for frame_key in permutation:
             if frame_key == current_input:
@@ -277,7 +250,7 @@ def build_input_permutations_rng(cfg: Config) -> Set[tuple]:
     triangular: bool = cfg.triangular_random
     keys: Tuple[str, str, str] = ('l', '', 'r') if cfg.axis == 'x' else ('j', '', 'd')
 
-    for _ in tqdm.tqdm(range(cfg.permutations), ncols=100):
+    for _ in tqdm.trange(cfg.permutations, ncols=100):
         inputs: List[Tuple[int, str]] = []
         frame_counter = 0
 
