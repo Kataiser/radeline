@@ -6,7 +6,7 @@ import platform
 import random
 import sys
 import time
-from typing import List, Set, Tuple, Union
+from typing import List, Optional, Set, Tuple, Union
 
 import tqdm
 import yaml
@@ -38,6 +38,7 @@ class Config:
         self.silent_output: bool = bool(cfg_dict['silent_output'])
         self.triangular_random: bool = bool(cfg_dict['triangular_random'])
         self.rng_threshold: int = int(cfg_dict['rng_threshold'])
+        self.rng_threshold_slow: int = int(cfg_dict['rng_threshold_slow'])
 
         if self.axis not in ('x', 'y'):
             print("Axis must be x or y, exiting")
@@ -51,12 +52,18 @@ class Config:
         self.pos_init: float = float(init_state[1 + axis_offset].rstrip(','))
         self.speed_init: float = float(init_state[4 + axis_offset].rstrip(','))
 
+        self.disabled_x_key: Optional[str] = None
+
+        if self.axis == 'x':
+            if (not self.on_ground and abs(self.speed_init) > self.frames * 65 / 6) or (self.on_ground and abs(self.speed_init) > self.frames * 50 / 3):
+                self.disabled_x_key = 'l' if self.speed_init > 0 else 'r'
+
 
 def main():
     start_time = time.perf_counter()
     sys.stdout = Logger()
     cfg: Config = Config()
-    use_sequential: bool = cfg.frames < cfg.rng_threshold
+    use_sequential: bool = cfg.frames < (cfg.rng_threshold if cfg.disabled_x_key else cfg.rng_threshold_slow)
 
     if use_sequential:
         print("Building permutations using sequential method...")
@@ -220,8 +227,8 @@ def approach(val: float, target: float, max_move: float) -> float:
 
 def build_input_permutations_sequential(cfg: Config) -> List[tuple]:
     input_permutations: List[tuple] = []
-    keys: Tuple[str, str, str] = ('', 'r', 'l') if cfg.axis == 'x' else ('', 'd', 'j')
-    permutation_count: int = 3 ** cfg.frames
+    keys: Tuple[str, ...] = x_axis_generated_keys(cfg) if cfg.axis == 'x' else ('j', '', 'd')
+    permutation_count: int = len(keys) ** cfg.frames
     permutation: Tuple[str, ...]
 
     # permutation: object
@@ -248,7 +255,7 @@ def build_input_permutations_sequential(cfg: Config) -> List[tuple]:
 def build_input_permutations_rng(cfg: Config) -> Set[tuple]:
     input_permutations: Set[tuple] = set()
     triangular: bool = cfg.triangular_random
-    keys: Tuple[str, str, str] = ('l', '', 'r') if cfg.axis == 'x' else ('j', '', 'd')
+    keys: Tuple[str, ...] = x_axis_generated_keys(cfg) if cfg.axis == 'x' else ('j', '', 'd')
 
     for _ in tqdm.trange(cfg.permutations, ncols=100):
         inputs: List[Tuple[int, str]] = []
@@ -266,6 +273,18 @@ def build_input_permutations_rng(cfg: Config) -> Set[tuple]:
         input_permutations.add(tuple(inputs))
 
     return input_permutations
+
+
+def x_axis_generated_keys(cfg: Config) -> Tuple[str, ...]:
+    if cfg.axis == 'x':
+        if cfg.disabled_x_key == 'l':
+            return '', 'r'
+        elif cfg.disabled_x_key == 'r':
+            return '', 'l'
+        else:
+            return 'l', '', 'r'
+    else:
+        return 'j', '', 'd'
 
 
 # log all prints to a file

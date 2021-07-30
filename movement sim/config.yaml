@@ -1,5 +1,5 @@
 frames: 12
-# Target and processsing
+# Target and processing
 permutations: 1000000
 axis: 'x'  # which axis to process, x or y
 goal_position: 160.5
@@ -8,7 +8,8 @@ goal_direction: '-'  # - means approaching from the left/top, + is from the righ
 prioritize_speed: false  # sort by speed instead of position
 append_keys: ''  # keys the formatter adds, e.g. "jg" to hold jump and grab as well
 open_results: true  # automatically opens the results file in the default text editor
-rng_threshold: 14  # frame count to start using the RNG method
+rng_threshold: 20  # frame count to start using the RNG method
+rng_threshold_slow: 14  # for when moving slowly
 
 # Output
 hide_duplicates: true  # don't output multiple inputs with the same resulting pos/speed (disable for performance)
