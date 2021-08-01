@@ -52,18 +52,28 @@ class Config:
         self.pos_init: float = float(init_state[1 + axis_offset].rstrip(','))
         self.speed_init: float = float(init_state[4 + axis_offset].rstrip(','))
 
-        self.disabled_x_key: Optional[str] = None
+        self.disabled_key: Optional[str] = None
 
         if self.axis == 'x':
             if (not self.on_ground and abs(self.speed_init) > self.frames * 65 / 6) or (self.on_ground and abs(self.speed_init) > self.frames * 50 / 3):
-                self.disabled_x_key = 'l' if self.speed_init > 0 else 'r'
+                self.disabled_key = 'l' if self.speed_init > 0 else 'r'
+        else:
+            if self.speed_init > 40:
+                self.disabled_key = 'j'
+            elif self.speed_init + self.frames * 15 < 160:
+                self.disabled_key = 'd'
 
 
 def main():
     start_time = time.perf_counter()
     sys.stdout = Logger()
     cfg: Config = Config()
-    use_sequential: bool = cfg.frames < (cfg.rng_threshold if cfg.disabled_x_key else cfg.rng_threshold_slow)
+
+    if cfg.disabled_key:
+        print(f"Disabled generating {cfg.disabled_key.upper()} inputs\n")
+        use_sequential: bool = cfg.frames < cfg.rng_threshold
+    else:
+        use_sequential: bool = cfg.frames < cfg.rng_threshold_slow
 
     if use_sequential:
         print("Building permutations using sequential method...")
@@ -227,7 +237,7 @@ def approach(val: float, target: float, max_move: float) -> float:
 
 def build_input_permutations_sequential(cfg: Config) -> List[tuple]:
     input_permutations: List[tuple] = []
-    keys: Tuple[str, ...] = x_axis_generated_keys(cfg) if cfg.axis == 'x' else ('j', '', 'd')
+    keys: Tuple[str, ...] = generator_keys(cfg)
     permutation_count: int = len(keys) ** cfg.frames
     permutation: Tuple[str, ...]
 
@@ -255,7 +265,7 @@ def build_input_permutations_sequential(cfg: Config) -> List[tuple]:
 def build_input_permutations_rng(cfg: Config) -> Set[tuple]:
     input_permutations: Set[tuple] = set()
     triangular: bool = cfg.triangular_random
-    keys: Tuple[str, ...] = x_axis_generated_keys(cfg) if cfg.axis == 'x' else ('j', '', 'd')
+    keys: Tuple[str, ...] = generator_keys(cfg)
 
     for _ in tqdm.trange(cfg.permutations, ncols=100):
         inputs: List[Tuple[int, str]] = []
@@ -275,13 +285,21 @@ def build_input_permutations_rng(cfg: Config) -> Set[tuple]:
     return input_permutations
 
 
-def x_axis_generated_keys(cfg: Config) -> Tuple[str, ...]:
-    if cfg.disabled_x_key == 'l':
-        return '', 'r'
-    elif cfg.disabled_x_key == 'r':
-        return '', 'l'
+def generator_keys(cfg: Config) -> Tuple[str, ...]:
+    if cfg.axis == 'x':
+        if cfg.disabled_key == 'l':
+            return '', 'r'
+        elif cfg.disabled_key == 'r':
+            return '', 'l'
+        else:
+            return '', 'r', 'l'
     else:
-        return '', 'r', 'l'
+        if cfg.disabled_key == 'j':
+            return '', 'd'
+        elif cfg.disabled_key == 'd':
+            return '', 'j'
+        else:
+            return '', 'j', 'd'
 
 
 # log all prints to a file
