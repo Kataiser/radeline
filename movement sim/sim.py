@@ -60,7 +60,7 @@ class Config:
         else:
             if self.speed_init > 40:
                 self.disabled_key = 'j'
-            elif self.speed_init + self.frames * 15 < 160:
+            elif self.speed_init + self.frames * 15 <= 160:
                 self.disabled_key = 'd'
 
 
