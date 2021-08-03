@@ -6,7 +6,7 @@ Chaos monkey that optimizes a [Celeste TAS](https://github.com/ShootMe/CelesteTA
 Now includes a fully working movement simulator, for brute forcing precise position and/or speed values! Not at all related to the main program cause that's not confusing!
 
 ## Download (includes both)
-[Radeline.zip](https://nightly.link/Kataiser/radeline/workflows/build/master/Radeline.zip) (25 MB)
+[Radeline.zip](https://nightly.link/Kataiser/radeline/workflows/build/master/Radeline.zip) (12 MB)
 
 ## Optimizer instructions
 1. Change `KeyStart` in `Saves\modsettings-CelesteTAS.celeste` to `- OemMinus`, because I couldn't get the default bind to work

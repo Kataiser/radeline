@@ -1,5 +1,3 @@
-# cython: language_level=3
-
 import copy
 import ctypes
 import functools
@@ -554,7 +552,7 @@ def pluralize(count: Union[int, Sized]) -> str:
         return 's' if len(count) != 1 else ''
 
 
-def get_foreground_window_title() -> Optional[str]:
+def get_foreground_window_title() -> str:
     fg_window = ctypes.windll.user32.GetForegroundWindow()
     length = ctypes.windll.user32.GetWindowTextLengthW(fg_window)
     buffer = ctypes.create_unicode_buffer(length + 1)

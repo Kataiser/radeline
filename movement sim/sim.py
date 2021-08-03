@@ -241,7 +241,6 @@ def build_input_permutations_sequential(cfg: Config) -> List[tuple]:
     permutation_count: int = len(keys) ** cfg.frames
     permutation: Tuple[str, ...]
 
-    # permutation: object
     for permutation in tqdm.tqdm(itertools.product(keys, repeat=cfg.frames), total=permutation_count, ncols=100):
         permutation_formatted: List[Tuple[int, str]] = []
         current_input: str = permutation[0]

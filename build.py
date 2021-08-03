@@ -44,13 +44,11 @@ def main():
     with zipfile.ZipFile(BytesIO(interpreter_data), 'r') as interpreter_zip:
         interpreter_zip.extractall(path=f"Radeline\\{interpreter_url.split('/')[-1][:-4]}\\")
 
-    # os.mkdir('Radeline\\packages')
     packages_dir = site.getsitepackages()[1]
     needed_packages = ['beautifulsoup4', 'bs4', 'certifi', 'charset_normalizer', 'idna', 'keyboard', 'lxml', 'psutil', 'pyperclip', 'requests', 'soupsieve', 'tqdm', 'urllib3', 'yaml']
-    excluded_packages = []
     for site_package in os.listdir(packages_dir):
         for needed_package in needed_packages:
-            if needed_package in site_package and site_package not in excluded_packages and os.path.isdir(f'{packages_dir}\\{site_package}'):
+            if needed_package in site_package and os.path.isdir(f'{packages_dir}\\{site_package}'):
                 shutil.copytree(f'{packages_dir}\\{site_package}', f'Radeline\\packages\\{site_package}')
                 break
     print(f"Copied {len(needed_packages)} packages from {packages_dir} to Radeline\\packages")
