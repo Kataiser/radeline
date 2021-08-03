@@ -1,5 +1,5 @@
-frames: 12
 # Target and processing
+frames: 12
 permutations: 1000000
 axis: 'x'  # which axis to process, x or y
 goal_position: 160.5
