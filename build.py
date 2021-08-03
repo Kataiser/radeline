@@ -55,7 +55,8 @@ def main():
                 break
     print(f"Copied {len(needed_packages)} packages from {packages_dir} to Radeline\\packages")
     shutil.rmtree('Radeline\\packages\\psutil\\tests')
-    print("Deleted psutil tests")
+    shutil.rmtree('Radeline\\packages\\bs4\\tests')
+    print("Deleted psutil and bs4 tests")
 
     print("Copied", shutil.copy('main.py', 'Radeline\\Optimizer'))
     print("Copied", shutil.copy('run.py', 'Radeline\\Optimizer'))
