@@ -1,3 +1,13 @@
+# Use control-shift-C in Studio and paste here
+init_state: "
+Pos: 160.458372503519, 67.7499865889549
+Speed: 0.00, -15.00
+Vel: 0.00, 0.00
+Stamina: 110 Timer: 16.609
+Dash
+[1]
+"
+
 # Target and processing
 frames: 12
 permutations: 1000000
@@ -6,14 +16,9 @@ goal_position: 160.5
 goal_speed: 90  # this is calculated by |final speed - goal speed|
 goal_direction: '-'  # - means approaching from the left/top, + is from the right/bottom
 prioritize_speed: false  # sort by speed instead of position
-append_keys: ''  # keys the formatter adds, e.g. "jg" to hold jump and grab as well
-open_results: true  # automatically opens the results file in the default text editor
+disabled_key: auto  # disable generating certain keys, "auto" will disable keys that can't ever affect input
 rng_threshold: 20  # frame count to start using the RNG method
 rng_threshold_slow: 14  # for when moving slowly
-
-# Output
-hide_duplicates: true  # don't output multiple inputs with the same resulting pos/speed (disable for performance)
-silent_output: false  # enable to save inputs directly to the file, skipping console (enable for performance)
 triangular_random: false  # bias toward shorter inputs, may improve precision (disable for performance)
 
 # X axis
@@ -24,12 +29,8 @@ jump_timer: 0  # 11 if just jumped, 14 if wallbounced
 jump_speed: 0  # -105 if just jumped, -160 if wallbounced, irrelevant if jump timer = 0
 auto_jump: false  # forced half peak gravity, from dashes, springs, etc.
 
-# Use control-shift-C in Studio and paste here
-init_state: "
-Pos: 160.458372503519, 67.7499865889549
-Speed: 0.00, -15.00
-Vel: 0.00, 0.00
-Stamina: 110 Timer: 16.609
-Dash
-[1]
-"
+# Output
+append_keys: ''  # keys the formatter adds, e.g. "jg" to hold jump and grab as well
+open_results: true  # automatically opens the results file in the default text editor
+hide_duplicates: true  # don't output multiple inputs with the same resulting pos/speed (disable for performance)
+silent_output: false  # enable to save inputs directly to the file, skipping console (enable for performance)

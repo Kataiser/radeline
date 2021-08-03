@@ -39,6 +39,7 @@ class Config:
         self.triangular_random: bool = bool(cfg_dict['triangular_random'])
         self.rng_threshold: int = int(cfg_dict['rng_threshold'])
         self.rng_threshold_slow: int = int(cfg_dict['rng_threshold_slow'])
+        self.disabled_key: Optional[str] = str(cfg_dict['disabled_key'])
 
         if self.axis not in ('x', 'y'):
             print("Axis must be x or y, exiting")
@@ -46,28 +47,32 @@ class Config:
         if self.goal_direction not in ('-', '+'):
             print("Goal direction must be - or +, exiting")
             raise SystemExit
+        if self.disabled_key not in ('auto', 'l', 'r', 'j', 'd'):
+            print("Disabled key must be auto, l, r, j, or d. Exiting")
+            raise SystemExit
 
         init_state = str(cfg_dict['init_state']).strip().split()
         axis_offset = 0 if self.axis == 'x' else 1
         self.pos_init: float = float(init_state[1 + axis_offset].rstrip(','))
         self.speed_init: float = float(init_state[4 + axis_offset].rstrip(','))
 
-        self.disabled_key: Optional[str] = None
-
-        if self.axis == 'x':
-            if (not self.on_ground and abs(self.speed_init) > self.frames * 65 / 6) or (self.on_ground and abs(self.speed_init) > self.frames * 50 / 3):
-                self.disabled_key = 'l' if self.speed_init > 0 else 'r'
-        else:
-            if self.speed_init > 40:
-                self.disabled_key = 'j'
-            elif self.speed_init + self.frames * 15 <= 160:
-                self.disabled_key = 'd'
-
 
 def main():
     start_time = time.perf_counter()
     sys.stdout = Logger()
     cfg: Config = Config()
+
+    if cfg.disabled_key == 'auto':
+        cfg.disabled_key = None
+
+        if cfg.axis == 'x':
+            if (not cfg.on_ground and abs(cfg.speed_init) > cfg.frames * 65 / 6) or (cfg.on_ground and abs(cfg.speed_init) > cfg.frames * 50 / 3):
+                cfg.disabled_key = 'l' if cfg.speed_init > 0 else 'r'
+        else:
+            if cfg.speed_init > 40:
+                cfg.disabled_key = 'j'
+            elif cfg.speed_init + cfg.frames * 15 <= 160:
+                cfg.disabled_key = 'd'
 
     if cfg.disabled_key:
         print(f"Disabled generating {cfg.disabled_key.upper()} inputs\n")
