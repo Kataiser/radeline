@@ -1,7 +1,7 @@
 # Radeline
 [![buhbaiSG](buhbaiSG.png)](https://www.frankerfacez.com/emoticon/316755-buhbaiSG)
 
-Chaos monkey that optimizes a [Celeste TAS](https://github.com/ShootMe/CelesteTAS) by randomly (or sequentially) changing inputs. Progress for the main game is [here](https://github.com/Kataiser/radeline/projects/1) and results go [here](https://github.com/Kataiser/CelesteTAS/tree/radeline-results) (but I've stopped working on it).
+Chaos monkey that optimizes a [Celeste TAS](https://github.com/EverestAPI/CelesteTAS-EverestInterop) by randomly (or sequentially) changing inputs. Progress for the main game is [here](https://github.com/Kataiser/radeline/projects/1) (but I've stopped working on it).
 
 Now includes a fully working movement simulator, for brute forcing precise position and/or speed values! Not at all related to the main program cause that's not confusing!
 
