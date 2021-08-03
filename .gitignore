@@ -12,3 +12,7 @@ movement sim/results.txt
 movement sim/sim_compiled.c
 movement sim/sim_compiled.html
 *.pyd
+Radeline/
+interpreter_dl_cache.sqlite
+optimizer.c
+optimizer.html

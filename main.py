@@ -1,6 +1,7 @@
 # cython: language_level=3
 
 import copy
+import ctypes
 import functools
 import os
 import platform
@@ -14,7 +15,6 @@ from typing import Any, Dict, List, Optional, Sized, TextIO, Union
 import keyboard
 import psutil
 import requests
-import win32gui
 import yaml
 from bs4 import BeautifulSoup
 
@@ -301,13 +301,13 @@ class Radeline:
 
     # if the game isn't the focused window, wait until it is or until a timeout
     def keep_game_focused(self):
-        focused_window: str = win32gui.GetWindowText(win32gui.GetForegroundWindow())
+        focused_window: str = get_foreground_window_title()
 
         if 'Celeste' not in focused_window:
             print("\nCeleste is not in focus, waiting until it is...")
 
             while focused_window != 'Celeste':
-                focused_window: str = win32gui.GetWindowText(win32gui.GetForegroundWindow())
+                focused_window: str = get_foreground_window_title()
                 time.sleep(1)
 
                 if not get_pids(silent=True, allow_exit=False)['celeste']:
@@ -471,7 +471,7 @@ def get_pids(silent: bool = False, init: bool = False, allow_exit: bool = True) 
         elif 'studio' in process_name.lower() and 'celeste' in process_name.lower():
             found_pids['studio'] = process_pid
 
-    if allow_exit and len(found_pids) != 2:
+    if allow_exit and None in found_pids.values():
         if not init:
             print("")
 
@@ -552,6 +552,14 @@ def pluralize(count: Union[int, Sized]) -> str:
         return 's' if count != 1 else ''
     else:
         return 's' if len(count) != 1 else ''
+
+
+def get_foreground_window_title() -> Optional[str]:
+    fg_window = ctypes.windll.user32.GetForegroundWindow()
+    length = ctypes.windll.user32.GetWindowTextLengthW(fg_window)
+    buffer = ctypes.create_unicode_buffer(length + 1)
+    ctypes.windll.user32.GetWindowTextW(fg_window, buffer, length + 1)
+    return buffer.value if buffer.value else ''
 
 
 @functools.cache

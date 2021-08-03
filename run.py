@@ -1,11 +1,12 @@
-try:
-    import RADeline
-except ImportError:
-    import main as RADeline
+import os
+import sys
+sys.path.extend((os.path.abspath('..\\packages'), os.getcwd()))
+
+import main as optimizer
 
 
 def main():
-    RADeline.main()
+    optimizer.main()
 
 
 if __name__ == '__main__':

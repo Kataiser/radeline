@@ -1,6 +1,6 @@
 import time
 
-import clipboard
+import pyperclip
 import yaml
 
 
@@ -11,7 +11,7 @@ def main():
     print('Auto formatter ready\n')
 
     while True:
-        in_text_raw: str = clipboard.paste()
+        in_text_raw: str = pyperclip.paste()
         in_text = in_text_raw.strip()
 
         if in_text.startswith('[[') and in_text.endswith(']]') and in_text.count('\'') > 1 and in_text.count('\'') % 2 == 0:  # that's probably good
@@ -30,7 +30,7 @@ def main():
                 print(in_text_raw.strip())
                 print(out_joined)
                 print()
-                clipboard.copy(out_joined)
+                pyperclip.copy(out_joined)
 
         time.sleep(0.5)
 

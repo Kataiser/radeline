@@ -1,3 +1,7 @@
+import os
+import sys
+sys.path.extend((os.path.abspath('..\\packages'), os.getcwd()))
+
 try:
     import sim_compiled as sim
 except ImportError:

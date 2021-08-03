@@ -1,4 +1,3 @@
 @echo off
-python -OO packages_setup.py
-python -OO main.py
+"..\python-3.9.6-embed-win32\python.exe" -I -OO "run.py"
 pause
