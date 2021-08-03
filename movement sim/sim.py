@@ -196,7 +196,7 @@ def sim_x(inputs: tuple, cfg: Config) -> Tuple[float, float]:
 def sim_y(inputs: tuple, cfg: Config) -> Tuple[float, float]:
     y: float = cfg.pos_init
     speed_y: float = cfg.speed_init
-    max_fall: float = max(160.0, cfg.speed_init)
+    max_fall: float = 160.0
     jump_timer: int = cfg.jump_timer
     input_line: Tuple[int, str]
 
