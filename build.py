@@ -56,6 +56,8 @@ def main():
     shutil.rmtree('Radeline\\packages\\bs4\\tests')
     print("Deleted psutil and bs4 tests")
 
+    print("Copied", shutil.copy('README.md', 'Radeline'))
+    print("Copied", shutil.copy('LICENSE', 'Radeline'))
     print("Copied", shutil.copy('optimizer\\main.py', 'Radeline\\Optimizer'))
     print("Copied", shutil.copy('optimizer\\run.py', 'Radeline\\Optimizer'))
     print("Copied", shutil.copy('optimizer\\run.bat', 'Radeline\\Optimizer'))
