@@ -39,7 +39,7 @@ class Config:
         self.triangular_random: bool = bool(cfg_dict['triangular_random'])
         self.rng_threshold: int = int(cfg_dict['rng_threshold'])
         self.rng_threshold_slow: int = int(cfg_dict['rng_threshold_slow'])
-        self.disabled_key: Optional[str] = str(cfg_dict['disabled_key'])
+        self.disabled_key: Optional[str] = str(cfg_dict['disabled_key']).lower()
 
         if self.axis not in ('x', 'y'):
             print("Axis must be x or y, exiting")

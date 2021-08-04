@@ -11,14 +11,14 @@ Dash
 # Target and processing
 frames: 12
 permutations: 1000000
-axis: 'x'  # which axis to process, x or y
+axis: x  # which axis to process, x or y
 goal_position: 160.5
 goal_speed: 90  # this is calculated by |final speed - goal speed|
-goal_direction: '-'  # - means approaching from the left/top, + is from the right/bottom
+goal_direction: '-'  # '-' means approaching from the left/top, '+' is from the right/bottom
 prioritize_speed: false  # sort by speed instead of position
 disabled_key: auto  # disable generating certain keys, "auto" will disable keys that can't ever affect input
-rng_threshold: 20  # frame count to start using the RNG method
-rng_threshold_slow: 14  # for when moving slowly
+rng_threshold: 20  # frame count to start using the RNG method when a key is disabled
+rng_threshold_slow: 14  # for when all keys are being generated
 triangular_random: false  # bias toward shorter inputs, may improve precision (disable for performance)
 
 # X axis
@@ -30,7 +30,7 @@ jump_speed: 0  # -105 if just jumped, -160 if wallbounced, irrelevant if jump ti
 auto_jump: false  # forced half peak gravity, from dashes, springs, etc.
 
 # Output
-append_keys: ''  # keys the formatter adds, e.g. "jg" to hold jump and grab as well
+append_keys: ''  # keys the formatter adds, e.g. 'jg' to hold jump and grab as well
 open_results: true  # automatically opens the results file in the default text editor
 hide_duplicates: true  # don't output multiple inputs with the same resulting pos/speed (disable for performance)
 silent_output: false  # enable to save inputs directly to the file, skipping console (enable for performance)
