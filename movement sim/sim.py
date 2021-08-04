@@ -24,7 +24,6 @@ class Config:
         self.permutations: int = int(cfg_dict['permutations'])
         self.axis: str = str(cfg_dict['axis'])
         self.jump_timer: int = int(cfg_dict['jump_timer'])
-        self.jump_speed: float = float(cfg_dict['jump_speed'])
         self.goal_position: float = float(cfg_dict['goal_position'])
         self.goal_direction: str = str(cfg_dict['goal_direction'])
         self.goal_speed: float = float(cfg_dict['goal_speed'])
@@ -221,7 +220,7 @@ def sim_y(inputs: tuple, cfg: Config) -> Tuple[float, float]:
 
             if jump_timer > 0:
                 if input_key == 'j' or cfg.auto_jump:
-                    speed_y = min(speed_y, cfg.jump_speed)
+                    speed_y = min(speed_y, cfg.speed_init)
                 else:
                     jump_timer = 0
 
