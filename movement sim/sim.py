@@ -78,7 +78,7 @@ def main():
         print(f"Disabled generating {cfg.disabled_key.upper()} inputs\n")
         use_sequential: bool = cfg.frames < cfg.rng_threshold
     else:
-        use_sequential: bool = cfg.frames < cfg.rng_threshold_slow
+        use_sequential = cfg.frames < cfg.rng_threshold_slow
 
     if use_sequential:
         print("Building permutations using sequential method...")
@@ -270,6 +270,8 @@ def build_input_permutations_rng(cfg: Config) -> Set[tuple]:
     input_permutations: Set[tuple] = set()
     triangular: bool = cfg.triangular_random
     keys: Tuple[str, ...] = generator_keys(cfg)
+    max_permutations: int = len(keys) ** cfg.frames
+    broke_from_loop: bool = False
 
     for _ in tqdm.trange(cfg.permutations, ncols=100):
         inputs: List[Tuple[int, str]] = []
@@ -285,6 +287,13 @@ def build_input_permutations_rng(cfg: Config) -> Set[tuple]:
             inputs.append((frames, random.choice(keys)))
 
         input_permutations.add(tuple(inputs))
+
+        if len(input_permutations) >= max_permutations:
+            broke_from_loop = True
+            break
+
+    if broke_from_loop:
+        print(f"Exited generating early due to reaching max possible permutations ({max_permutations})")
 
     return input_permutations
 
