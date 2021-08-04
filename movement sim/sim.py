@@ -8,6 +8,7 @@ import sys
 import time
 from typing import List, Optional, Set, Tuple, Union
 
+import psutil
 import tqdm
 import yaml
 
@@ -244,6 +245,9 @@ def build_input_permutations_sequential(cfg: Config) -> List[tuple]:
     keys: Tuple[str, ...] = generator_keys(cfg)
     permutation_count: int = len(keys) ** cfg.frames
     permutation: Tuple[str, ...]
+    process: psutil.Process = psutil.Process()
+    broke_from_loop: bool = False
+    ram_check_iter: int = 0
 
     for permutation in tqdm.tqdm(itertools.product(keys, repeat=cfg.frames), total=permutation_count, ncols=100):
         permutation_formatted: List[Tuple[int, str]] = []
@@ -261,6 +265,17 @@ def build_input_permutations_sequential(cfg: Config) -> List[tuple]:
 
         permutation_formatted.append((input_len, current_input))
         input_permutations.append(tuple(permutation_formatted))
+        ram_check_iter += 1
+
+        if ram_check_iter > 100000:
+            ram_check_iter = 0
+
+            if hit_ram_limit(process):
+                broke_from_loop = True
+                break
+
+    if broke_from_loop:
+        print("Exiting generating inputs early due to running low on RAM")
 
     return input_permutations
 
@@ -270,7 +285,10 @@ def build_input_permutations_rng(cfg: Config) -> Set[tuple]:
     triangular: bool = cfg.triangular_random
     keys: Tuple[str, ...] = generator_keys(cfg)
     max_permutations: int = len(keys) ** cfg.frames
-    broke_from_loop: bool = False
+    process: psutil.Process = psutil.Process()
+    broke_from_loop_max: bool = False
+    broke_from_loop_ram: bool = False
+    ram_check_iter: int = 0
 
     for _ in tqdm.trange(cfg.permutations, ncols=100):
         inputs: List[Tuple[int, str]] = []
@@ -286,13 +304,24 @@ def build_input_permutations_rng(cfg: Config) -> Set[tuple]:
             inputs.append((frames, random.choice(keys)))
 
         input_permutations.add(tuple(inputs))
+        ram_check_iter += 1
+
+        if ram_check_iter > 100000:
+            ram_check_iter = 0
+
+            if hit_ram_limit(process):
+                broke_from_loop_ram = True
+                break
 
         if len(input_permutations) >= max_permutations:
-            broke_from_loop = True
+            broke_from_loop_max = True
             break
 
-    if broke_from_loop:
-        print(f"Exited generating early due to reaching max possible permutations ({max_permutations})")
+    if broke_from_loop_ram:
+        print("Exiting generating inputs early due to running low on RAM")
+
+    if broke_from_loop_max:
+        print(f"Exiting generating early due to reaching max possible permutations ({max_permutations})")
 
     return input_permutations
 
@@ -312,6 +341,10 @@ def generator_keys(cfg: Config) -> Tuple[str, ...]:
             return '', 'j'
         else:
             return '', 'j', 'd'
+
+
+def hit_ram_limit(process: psutil.Process) -> bool:
+    return process.memory_info().rss > 1_800_000_000 or psutil.virtual_memory().available < 200_000_000
 
 
 # log all prints to a file
