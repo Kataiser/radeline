@@ -6,7 +6,7 @@ import platform
 import random
 import sys
 import time
-from typing import List, Optional, Set, Tuple, Union
+from typing import Callable, List, Optional, Set, Tuple, Union
 
 import tqdm
 import yaml
@@ -57,17 +57,20 @@ class Config:
 
 
 def main():
-    start_time = time.perf_counter()
+    start_time: float = time.perf_counter()
     sys.stdout = Logger()
     cfg: Config = Config()
 
     if cfg.disabled_key == 'auto':
         cfg.disabled_key = None
 
+        # do some math to determine if a key can ever affect movement
         if cfg.axis == 'x':
+            # disable holding backwards if speed can't ever drop below zero due to friction
             if (not cfg.on_ground and abs(cfg.speed_init) > cfg.frames * 65 / 6) or (cfg.on_ground and abs(cfg.speed_init) > cfg.frames * 50 / 3):
                 cfg.disabled_key = 'l' if cfg.speed_init > 0 else 'r'
         else:
+            # disable jump if past jump peak, or down if can't ever reach fast fall speed
             if cfg.speed_init > 40:
                 cfg.disabled_key = 'j'
             elif cfg.speed_init + cfg.frames * 15 <= 160:
@@ -93,16 +96,15 @@ def main():
     for permutation in tqdm.tqdm(input_permutations, ncols=100):
         results_pos: float
         results_speed: float
+        sim_function: Callable = sim_x if cfg.axis == 'x' else sim_y
+        results_pos, results_speed = sim_function(permutation, cfg)
 
-        if cfg.axis == 'x':
-            results_pos, results_speed = sim_x(permutation, cfg)
-        else:
-            results_pos, results_speed = sim_y(permutation, cfg)
-
+        # if result within goal range
         if (cfg.goal_direction == '-' and results_pos < cfg.goal_position) or (cfg.goal_direction == '+' and results_pos > cfg.goal_position):
             append_permutation: bool = True
             valid_permutation: Tuple[float, float, tuple]
 
+            # this gets exponentially(?) slower with more permutations
             if cfg.hide_duplicates:
                 for valid_permutation in valid_permutations:
                     if results_pos == valid_permutation[0] and results_speed == valid_permutation[1]:
@@ -115,6 +117,7 @@ def main():
             if append_permutation:
                 valid_permutations.append((results_pos, results_speed, permutation))
 
+    # sort both speed and position, with the second one performed being the prioritized one
     if cfg.prioritize_speed:
         valid_permutations.sort(reverse=cfg.goal_direction == '+', key=lambda p: p[0])
         valid_permutations.sort(reverse=True, key=lambda p: abs(p[1] - cfg.goal_speed))
@@ -122,6 +125,7 @@ def main():
         valid_permutations.sort(reverse=True, key=lambda p: abs(p[1] - cfg.goal_speed))
         valid_permutations.sort(reverse=cfg.goal_direction == '+', key=lambda p: p[0])
 
+    # delete unused permutations from memory
     input_permutations_len: int = len(input_permutations)
     del input_permutations
     gc.collect()
@@ -129,6 +133,7 @@ def main():
     print("\nDone, outputting\n")
     sys.stdout.print_enabled = not cfg.silent_output
 
+    # format and print permutations, which also saves them to the results file
     for valid_permutation in valid_permutations:
         perm_display: List[List[Union[int, str]]] = []
 
@@ -140,6 +145,7 @@ def main():
 
         print(f'{valid_permutation[:2]} {perm_display}')
 
+    # delete all permutations from memory
     valid_permutations_len: int = len(valid_permutations)
     del valid_permutations
     gc.collect()
@@ -153,12 +159,14 @@ def main():
     print(f"Processing time: {round(time.perf_counter() - start_time, 1)} s\n")
 
     if cfg.open_results and platform.system() == 'Windows':
+        # opens in default text editor
         os.startfile(sys.stdout.filename)
 
     sys.stdout = sys.__stdout__
     input_formatter.main()
 
 
+# simulate X axis inputs
 def sim_x(inputs: tuple, cfg: Config) -> Tuple[float, float]:
     x: float = cfg.pos_init
     speed_x: float = cfg.speed_init
@@ -192,10 +200,11 @@ def sim_x(inputs: tuple, cfg: Config) -> Tuple[float, float]:
     return float(round(x, 10)), float(round(speed_x, 10))
 
 
+# simulate Y axis inputs
 def sim_y(inputs: tuple, cfg: Config) -> Tuple[float, float]:
     y: float = cfg.pos_init
     speed_y: float = cfg.speed_init
-    max_fall: float = 160.0
+    max_fall: float = 160.0  # not entirely sure how this works, may be wrong in some cases
     jump_timer: int = cfg.jump_timer
     input_line: Tuple[int, str]
 
@@ -232,6 +241,7 @@ def sim_y(inputs: tuple, cfg: Config) -> Tuple[float, float]:
     return float(round(y, 10)), float(round(speed_y, 10))
 
 
+# from Monocle.Calc
 def approach(val: float, target: float, max_move: float) -> float:
     if val <= target:
         return min(val + max_move, target)
@@ -239,6 +249,7 @@ def approach(val: float, target: float, max_move: float) -> float:
         return max(val - max_move, target)
 
 
+# generate every possible input permutation sequentially
 def build_input_permutations_sequential(cfg: Config) -> List[tuple]:
     input_permutations: List[tuple] = []
     keys: Tuple[str, ...] = generator_keys(cfg)
@@ -249,12 +260,14 @@ def build_input_permutations_sequential(cfg: Config) -> List[tuple]:
     do_ram_check: bool = permutation_count > 3000000
     process: Optional = current_process_if_needed(do_ram_check)
 
+    # all hail itertools.product()
     for permutation in tqdm.tqdm(itertools.product(keys, repeat=cfg.frames), total=permutation_count, ncols=100):
         permutation_formatted: List[Tuple[int, str]] = []
         current_input: str = permutation[0]
         input_len: int = 0
         frame_key: str
 
+        # convert messy inputs to the compact format
         for frame_key in permutation:
             if frame_key == current_input:
                 input_len += 1
@@ -280,8 +293,9 @@ def build_input_permutations_sequential(cfg: Config) -> List[tuple]:
     return input_permutations
 
 
+# generate a ton of input permutations randomly
 def build_input_permutations_rng(cfg: Config) -> Set[tuple]:
-    input_permutations: Set[tuple] = set()
+    input_permutations: Set[tuple] = set()  # is a set to avoid duplicates, which takes a perfomance hit
     triangular: bool = cfg.triangular_random
     keys: Tuple[str, ...] = generator_keys(cfg)
     max_permutations: int = len(keys) ** cfg.frames
@@ -297,6 +311,7 @@ def build_input_permutations_rng(cfg: Config) -> Set[tuple]:
 
         while frame_counter < cfg.frames:
             if triangular:
+                # probably don't actually use this, idk
                 frames = round(random.triangular(1, cfg.frames - frame_counter, 1))
             else:
                 frames = round(random.randint(1, cfg.frames - frame_counter))
@@ -327,6 +342,7 @@ def build_input_permutations_rng(cfg: Config) -> Set[tuple]:
     return input_permutations
 
 
+# determine which keys will be generated
 def generator_keys(cfg: Config) -> Tuple[str, ...]:
     if cfg.axis == 'x':
         if cfg.disabled_key == 'l':
@@ -344,12 +360,14 @@ def generator_keys(cfg: Config) -> Tuple[str, ...]:
             return '', 'j', 'd'
 
 
+# only import psutil and get current process if RAM checking will be done at all
 def current_process_if_needed(doing_ram_check: bool) -> Optional:
     if doing_ram_check:
         import psutil
         return psutil.Process()
 
 
+# determinte if either the process is reaching the 32-bit limit or the machine is low on memory
 def hit_ram_limit(process) -> bool:
     import psutil
     return process.memory_info().rss > 1_800_000_000 or psutil.virtual_memory().available < 200_000_000
