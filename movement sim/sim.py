@@ -8,7 +8,6 @@ import sys
 import time
 from typing import List, Optional, Set, Tuple, Union
 
-import psutil
 import tqdm
 import yaml
 
@@ -245,9 +244,10 @@ def build_input_permutations_sequential(cfg: Config) -> List[tuple]:
     keys: Tuple[str, ...] = generator_keys(cfg)
     permutation_count: int = len(keys) ** cfg.frames
     permutation: Tuple[str, ...]
-    process: psutil.Process = psutil.Process()
     broke_from_loop: bool = False
     ram_check_iter: int = 0
+    do_ram_check: bool = permutation_count > 3000000
+    process: Optional = current_process_if_needed(do_ram_check)
 
     for permutation in tqdm.tqdm(itertools.product(keys, repeat=cfg.frames), total=permutation_count, ncols=100):
         permutation_formatted: List[Tuple[int, str]] = []
@@ -267,7 +267,7 @@ def build_input_permutations_sequential(cfg: Config) -> List[tuple]:
         input_permutations.append(tuple(permutation_formatted))
         ram_check_iter += 1
 
-        if ram_check_iter > 100000:
+        if do_ram_check and ram_check_iter > 100000:
             ram_check_iter = 0
 
             if hit_ram_limit(process):
@@ -285,10 +285,11 @@ def build_input_permutations_rng(cfg: Config) -> Set[tuple]:
     triangular: bool = cfg.triangular_random
     keys: Tuple[str, ...] = generator_keys(cfg)
     max_permutations: int = len(keys) ** cfg.frames
-    process: psutil.Process = psutil.Process()
     broke_from_loop_max: bool = False
     broke_from_loop_ram: bool = False
     ram_check_iter: int = 0
+    do_ram_check: bool = min(cfg.permutations, max_permutations) > 5000000
+    process: Optional = current_process_if_needed(do_ram_check)
 
     for _ in tqdm.trange(cfg.permutations, ncols=100):
         inputs: List[Tuple[int, str]] = []
@@ -306,7 +307,7 @@ def build_input_permutations_rng(cfg: Config) -> Set[tuple]:
         input_permutations.add(tuple(inputs))
         ram_check_iter += 1
 
-        if ram_check_iter > 100000:
+        if do_ram_check and ram_check_iter > 100000:
             ram_check_iter = 0
 
             if hit_ram_limit(process):
@@ -343,7 +344,14 @@ def generator_keys(cfg: Config) -> Tuple[str, ...]:
             return '', 'j', 'd'
 
 
-def hit_ram_limit(process: psutil.Process) -> bool:
+def current_process_if_needed(doing_ram_check: bool) -> Optional:
+    if doing_ram_check:
+        import psutil
+        return psutil.Process()
+
+
+def hit_ram_limit(process) -> bool:
+    import psutil
     return process.memory_info().rss > 1_800_000_000 or psutil.virtual_memory().available < 200_000_000
 
 
