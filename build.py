@@ -66,6 +66,8 @@ def main():
     print("Copied", shutil.copy('movement sim\\run.bat', 'Radeline\\Simulator'))
     print("Copied", shutil.copy('movement sim\\config.yaml', 'Radeline\\Simulator'))
     print("Copied", shutil.copy('movement sim\\input_formatter.py', 'Radeline\\Simulator'))
+    print("Copied", shutil.copy('movement sim\\run_formatter.py', 'Radeline\\Simulator'))
+    print("Copied", shutil.copy('movement sim\\run formatter.bat', 'Radeline\\Simulator'))
 
     print("\nBuild finished")
 
