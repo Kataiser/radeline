@@ -9,9 +9,7 @@ Now includes a fully working movement simulator, for brute forcing precise posit
 [Radeline.zip](https://nightly.link/Kataiser/radeline/workflows/build/master/Radeline.zip) (12 MB)
 
 ## Optimizer instructions
-1. Change `KeyStart` in `Saves\modsettings-CelesteTAS.celeste` to `- OemMinus`, because I couldn't get the default bind to work
 1. Make sure the inputs in your TAS have a breakpoint on the very last line, a console load (or chapter restart) at the beginning, and end on the chapter complete screen (or a S&Q). The goal is to make the game save to debug.celeste
-1. If you're not using the `console load` start method, make sure the most recently run command in Celeste is the correct chapter load (ex. `load 4` or `rmx2 7`)
 1. Take a look at `settings.yaml` (it's just a text file) and make sure it's configured like you want. The main thing is putting in the path to your TAS file
 1. Be careful with Celeste Studio because it doesn't read Radeline's changes to your TAS and so you could easily accidentally overwrite it. Also make sure "Launch Studio at boot" is enabled in CelesteTAS, in case the game crashes
 1. Run `run.bat`

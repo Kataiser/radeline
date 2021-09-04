@@ -1,5 +1,4 @@
 import copy
-import ctypes
 import functools
 import os
 import platform
@@ -19,7 +18,7 @@ from bs4 import BeautifulSoup
 
 class Radeline:
     def __init__(self):
-        if sys.version_info.major + (sys.version_info.minor / 10) < 3.6:  # probably not how you're supposed to do this
+        if sys.version_info.major < 3 or sys.version_info.minor < 6:
             print("Python >= 3.6 is required, exiting")
 
         sys.stdout = Logger()
@@ -29,7 +28,6 @@ class Radeline:
         self.improved_lines: List[int] = []
         self.improved_lines_formatted: str = ''
         self.frames_saved_total: int = 0
-        self.initial_delay: Union[int, float] = settings()['initial_delay_time']
         self.target_data: dict = {}
         self.target_time: int = 0
         self.og_target_time: int = 0
@@ -74,14 +72,9 @@ class Radeline:
             print(f"Trimmed the TAS to lines {input_file_trims[0] + 1}-{celeste_tas_len - input_file_trims[1]}")
 
         valid_line_nums = order_line_list(valid_line_nums)
-
-        print(f"Starting in {self.initial_delay} seconds, switch to the Celeste window!")
-        time.sleep(self.initial_delay)
-
-        # assumes that the TAS is currently functional
-        self.keep_game_focused()
         self.celeste_path = psutil.Process(self.pids['celeste']).cwd()
         print("Getting reference data")
+        # assumes that the TAS is currently functional
         self.run_tas(pauseable=False)
 
         self.target_data = self.parse_save_file()
@@ -96,7 +89,7 @@ class Radeline:
 
         # perform the main operation
         print(f"Beginning optimization ({celeste_tas_len} lines, {len(valid_line_nums)} inputs)\n"
-              f"Press {pause_key} to pause, and make sure to keep the Celeste window focused\n")
+              f"Press {pause_key} to pause\n")
         time.sleep(settings()['loading_time_compensation'])
         self.reduce_lines(valid_line_nums)
 
@@ -206,8 +199,7 @@ class Radeline:
             print(f"Now paused, press enter in this window to resume "
                   f"(currently at {improved_lines_num} optimization{pluralize(improved_lines_num)}, -{self.frames_saved_total}f)")
             input()
-            print(f"Resuming in {self.initial_delay} seconds, switch to the Celeste window\n")
-            time.sleep(self.initial_delay)
+            print(f"Resuming\n")
 
             settings.cache_clear()  # reload settings file
             validate_settings()
@@ -233,24 +225,8 @@ class Radeline:
 
         self.paused = False
 
-        if not settings()['console_load_mode']:
-            keyboard.press('`')
-            time.sleep(0.1)
-            keyboard.release('`')
-            keyboard.press('up')
-            time.sleep(0.1)
-            keyboard.release('up')
-            keyboard.press('enter')
-            time.sleep(0.1)
-            keyboard.release('enter')
-            time.sleep(0.5)
-            keyboard.press('`')
-            time.sleep(0.5)
-            keyboard.release('`')
-
-        keyboard.press(12)  # - (minus/hyphen)
-        time.sleep(0.1)
-        keyboard.release(12)
+        # start the TAS via DebugRC
+        requests.post('http://localhost:32270/tas/sendhotkey?id=Restart', timeout=long_timeout)
         time.sleep(2)
         start_time: float = time.perf_counter()
         last_request_time: float = start_time
@@ -282,28 +258,10 @@ class Radeline:
     # perform reduce_line() for a list of line numbers
     def reduce_lines(self, lines: List[int]):
         for line_enum in enumerate(lines):
-            self.keep_game_focused()  # do this before everything to keep both the TAS and the output clean
-
             progress: float = (line_enum[0] / (len(lines) - 1)) * 100
             self.reduce_line(line_enum[1], progress)
 
-    # if the game isn't the focused window, wait until it is or until a timeout
-    def keep_game_focused(self):
-        focused_window: str = get_foreground_window_title()
-
-        if 'Celeste' not in focused_window:
-            print("\nCeleste is not in focus, waiting until it is...")
-
-            while focused_window != 'Celeste':
-                focused_window: str = get_foreground_window_title()
-                time.sleep(1)
-
-                if not get_pids(silent=True, allow_exit=False)['celeste']:
-                    self.restart_game()
-
-            print(f"Celeste has been focused, resuming in {self.initial_delay} seconds...\n")
-            time.sleep(self.initial_delay)
-
+    # for if the game crashes mid-optimization
     def restart_game(self):
         time.sleep(settings()['restart_prewait'])
 
@@ -493,12 +451,12 @@ def validate_settings():
         print(f"Couldn't parse settings:\n    {error_tabbed}")
         raise SystemExit
 
-    setting_count: int = 26
+    setting_count: int = 24
     tas_path: str = str(settings()['tas_path'])
     bool_settings = ('exit_game_when_done', 'clear_output_log_on_startup', 'open_tas_when_done', 'extra_attempts', 'keep_celeste_focused',
-                     'console_load_mode', 'ensure_breakpoint_end', 'auto_trim', 'restart_crashed_game', 'kill_notepads', 'optimize_feathers')
+                     'ensure_breakpoint_end', 'auto_trim', 'restart_crashed_game', 'kill_notepads', 'optimize_feathers')
     int_settings = ('extra_attempts_window_size', 'feather_degree_window_size')
-    num_settings = ('initial_delay_time', 'loading_time_compensation', 'focus_wait_timeout', 'session_short_timeout', 'session_long_timeout', 'session_interval', 'restart_prewait',
+    num_settings = ('loading_time_compensation', 'focus_wait_timeout', 'session_short_timeout', 'session_long_timeout', 'session_interval', 'restart_prewait',
                     'restart_postwait', 'session_wait')  # int or float
 
     # makes sure that each setting is what type it needs to be, and some other checks as well
@@ -540,14 +498,6 @@ def pluralize(count: Union[int, Sized]) -> str:
         return 's' if count != 1 else ''
     else:
         return 's' if len(count) != 1 else ''
-
-
-def get_foreground_window_title() -> str:
-    fg_window = ctypes.windll.user32.GetForegroundWindow()
-    length = ctypes.windll.user32.GetWindowTextLengthW(fg_window)
-    buffer = ctypes.create_unicode_buffer(length + 1)
-    ctypes.windll.user32.GetWindowTextW(fg_window, buffer, length + 1)
-    return buffer.value if buffer.value else ''
 
 
 @functools.cache
