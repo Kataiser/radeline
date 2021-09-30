@@ -27,6 +27,7 @@ holding: false
 # Y axis
 jump_timer: 0  # 11 if just jumped, 14 if wallbounced. jump speed will be based on current speed
 auto_jump: false  # forced half peak gravity, from dashes, springs, etc.
+max_fall: 160  # 160 if you aren't fast falling yet, current Y speed if you are. gets weird for a few frames after down dashes
 
 # Output
 append_keys: ''  # keys the formatter adds, e.g. 'jg' to hold jump and grab as well

@@ -39,6 +39,7 @@ class Config:
         self.rng_threshold: int = int(cfg_dict['rng_threshold'])
         self.rng_threshold_slow: int = int(cfg_dict['rng_threshold_slow'])
         self.disabled_key: Optional[str] = str(cfg_dict['disabled_key']).lower()
+        self.max_fall: float = float(cfg_dict['max_fall'])
 
         if self.axis not in ('x', 'y'):
             print("Axis must be x or y, exiting")
@@ -204,7 +205,7 @@ def sim_x(inputs: tuple, cfg: Config) -> Tuple[float, float]:
 def sim_y(inputs: tuple, cfg: Config) -> Tuple[float, float]:
     y: float = cfg.pos_init
     speed_y: float = cfg.speed_init
-    max_fall: float = 160.0  # not entirely sure how this works, may be wrong in some cases
+    max_fall: float = cfg.max_fall
     jump_timer: int = cfg.jump_timer
     input_line: Tuple[int, str]
 
