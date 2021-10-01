@@ -6,7 +6,20 @@ Vel: 0.00, 0.00
 Stamina: 110 Timer: 16.609
 Dash
 [1]
+
+AutoJump: False
+MaxFall: 160.00
+JumpTimer: 0
+Holding:
 "
+
+# More init state, ignored if using custom info
+# X axis
+holding: false
+# Y axis
+jump_timer: 0  # 11 if just jumped, 14 if wallbounced. jump speed will be based on current speed
+auto_jump: false  # forced half peak gravity, from dashes, springs, etc.
+max_fall: 160  # 160 if you aren't fast falling yet, current Y speed if you are. gets weird for a few frames after down dashes
 
 # Target and processing
 frames: 12
@@ -20,14 +33,6 @@ disabled_key: auto  # disable generating certain keys, "auto" will disable keys 
 rng_threshold: 20  # frame count to start using the RNG method when a key is disabled
 rng_threshold_slow: 14  # for when all keys are being generated
 triangular_random: false  # bias toward shorter inputs, may improve precision (disable for performance)
-
-# X axis
-on_ground: false
-holding: false
-# Y axis
-jump_timer: 0  # 11 if just jumped, 14 if wallbounced. jump speed will be based on current speed
-auto_jump: false  # forced half peak gravity, from dashes, springs, etc.
-max_fall: 160  # 160 if you aren't fast falling yet, current Y speed if you are. gets weird for a few frames after down dashes
 
 # Output
 append_keys: ''  # keys the formatter adds, e.g. 'jg' to hold jump and grab as well

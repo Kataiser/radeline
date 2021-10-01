@@ -28,7 +28,6 @@ class Config:
         self.goal_direction: str = str(cfg_dict['goal_direction'])
         self.goal_speed: float = float(cfg_dict['goal_speed'])
         self.prioritize_speed: bool = bool(cfg_dict['prioritize_speed'])
-        self.on_ground: bool = bool(cfg_dict['on_ground'])
         self.holding: bool = bool(cfg_dict['holding'])
         self.auto_jump: bool = bool(cfg_dict['auto_jump'])
         self.append_keys: str = str(cfg_dict['append_keys'])
@@ -51,10 +50,15 @@ class Config:
             print("Disabled key must be auto, l, r, j, or d. Exiting")
             raise SystemExit
 
-        init_state = str(cfg_dict['init_state']).strip().split()
+        init_state = cfg_dict['init_state'].strip().split()
         axis_offset = 0 if self.axis == 'x' else 1
         self.pos_init: float = float(init_state[1 + axis_offset].rstrip(','))
         self.speed_init: float = float(init_state[4 + axis_offset].rstrip(','))
+        self.on_ground: bool = 'Ground' in init_state
+        self.auto_jump = 'AutoJump: True' in cfg_dict['init_state'] if 'AutoJump:' in cfg_dict['init_state'] else self.auto_jump
+        self.max_fall = float(init_state[init_state.index('MaxFall:') + 1]) if 'MaxFall:' in cfg_dict['init_state'] else self.max_fall
+        self.jump_timer = float(init_state[init_state.index('JumpTimer:') + 1]) if 'JumpTimer:' in cfg_dict['init_state'] else self.jump_timer
+        self.holding = init_state[-1] != 'Holding:' and init_state[init_state.index('Holding:') + 1] != '' if 'Holding:' in init_state else self.holding
 
 
 def main():
