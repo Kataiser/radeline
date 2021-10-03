@@ -38,7 +38,7 @@ def main():
     else:
         print("Not using DL cache for interpreter")
 
-    interpreter_url = 'https://www.python.org/ftp/python/3.9.6/python-3.9.6-embed-win32.zip'
+    interpreter_url = 'https://www.python.org/ftp/python/3.9.7/python-3.9.7-embed-win32.zip'
     print(f"Downloading Python interpreter from {interpreter_url}...")
     interpreter_data = requests.get(interpreter_url, timeout=30).content
     with zipfile.ZipFile(BytesIO(interpreter_data), 'r') as interpreter_zip:
@@ -53,7 +53,6 @@ def main():
                 break
     print(f"Copied {len(needed_packages)} packages from {packages_dir} to Radeline\\packages")
     shutil.rmtree('Radeline\\packages\\psutil\\tests')
-    shutil.rmtree('Radeline\\packages\\bs4\\tests')
     print("Deleted psutil and bs4 tests")
 
     print("Copied", shutil.copy('README.md', 'Radeline'))
