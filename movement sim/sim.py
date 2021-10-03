@@ -47,8 +47,8 @@ class Config:
         if self.goal_direction not in ('-', '+'):
             print("Goal direction must be - or +, exiting")
             raise SystemExit
-        if self.disabled_key not in ('auto', 'l', 'r', 'j', 'd'):
-            print("Disabled key must be auto, l, r, j, or d. Exiting")
+        if self.disabled_key not in ('auto', 'l', 'r', 'j', 'd', 'none'):
+            print("Disabled key must be auto, l, r, j, d, or just blank. Exiting")
             raise SystemExit
 
         init_state = cfg_dict['init_state'].strip().split()
@@ -66,7 +66,7 @@ def main():
     sys.stdout = Logger()
     cfg: Config = Config()
 
-    if cfg.disabled_key == 'auto':
+    if cfg.disabled_key in ('auto', 'none'):
         cfg.disabled_key = None
 
         # do some math to determine if a key can ever affect movement

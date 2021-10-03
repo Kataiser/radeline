@@ -30,7 +30,7 @@ goal_position: 160.5
 goal_speed: 90  # this is calculated by |final speed - goal speed|
 goal_direction: '-'  # '-' means approaching from the left/top, '+' is from the right/bottom
 prioritize_speed: false  # sort by speed instead of position
-disabled_key: auto  # disable generating certain keys, "auto" will disable keys that can't ever affect input
+disabled_key: auto  # disable generating certain keys, "auto" or blank will disable keys that can't ever affect input
 rng_threshold: 20  # frame count to start using the RNG method when a key is disabled
 rng_threshold_slow: 14  # for when all keys are being generated
 triangular_random: false  # bias toward shorter inputs, may improve precision (disable for performance)
