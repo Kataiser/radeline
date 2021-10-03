@@ -39,6 +39,7 @@ class Config:
         self.rng_threshold_slow: int = int(cfg_dict['rng_threshold_slow'])
         self.disabled_key: Optional[str] = str(cfg_dict['disabled_key']).lower()
         self.max_fall: float = float(cfg_dict['max_fall'])
+        self.on_ground: bool = bool(cfg_dict['on_ground'])
 
         if self.axis not in ('x', 'y'):
             print("Axis must be x or y, exiting")
@@ -54,7 +55,6 @@ class Config:
         axis_offset = 0 if self.axis == 'x' else 1
         self.pos_init: float = float(init_state[1 + axis_offset].rstrip(','))
         self.speed_init: float = float(init_state[4 + axis_offset].rstrip(','))
-        self.on_ground: bool = 'Ground' in init_state
         self.auto_jump = 'AutoJump: True' in cfg_dict['init_state'] if 'AutoJump:' in cfg_dict['init_state'] else self.auto_jump
         self.max_fall = float(init_state[init_state.index('MaxFall:') + 1]) if 'MaxFall:' in cfg_dict['init_state'] else self.max_fall
         self.jump_timer = float(init_state[init_state.index('JumpTimer:') + 1]) if 'JumpTimer:' in cfg_dict['init_state'] else self.jump_timer

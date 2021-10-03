@@ -13,8 +13,9 @@ JumpTimer: 0
 Holding:
 "
 
-# More init state, ignored if using custom info
+# More init state, ignored if using custom info (except on_ground which is always manual)
 # X axis
+on_ground: false
 holding: false
 # Y axis
 jump_timer: 0  # 11 if just jumped, 14 if wallbounced. jump speed will be based on current speed
