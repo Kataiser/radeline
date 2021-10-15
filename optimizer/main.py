@@ -227,7 +227,6 @@ class Radeline:
 
         # start the TAS via DebugRC
         requests.post('http://localhost:32270/tas/sendhotkey?id=Restart', timeout=long_timeout)
-        time.sleep(2)
         start_time: float = time.perf_counter()
         last_request_time: float = start_time
 
@@ -238,7 +237,7 @@ class Radeline:
                 self.paused = True
                 print("\nPause key pressed")  # technically not paused yet
 
-            if current_time - last_request_time >= interval:
+            if current_time - last_request_time >= interval and current_time - start_time > 2:
                 try:
                     # just ask the game when the TAS has finished lol
                     session_data: str = requests.get('http://localhost:32270/tas/info', timeout=short_timeout).text
