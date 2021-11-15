@@ -15,9 +15,9 @@ def main():
 
         if in_text.startswith('[[') and in_text.endswith(']]') and in_text.count('\'') > 1 and in_text.count('\'') % 2 == 0:  # that's probably good
             with open('config.yaml', 'r') as config_file:
-                append_keys = yaml.safe_load(config_file)['append_keys'].replace(' ', '')
-                assert append_keys is not None
+                append_keys_config = yaml.safe_load(config_file)['append_keys']
 
+            append_keys = '' if append_keys_config is None else append_keys_config.replace(' ', '')
             out = []
 
             for line in in_text.split('[')[2:]:
