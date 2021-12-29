@@ -57,7 +57,7 @@ class Config:
         self.speed_init: float = float(init_state[4 + axis_offset].rstrip(','))
         self.auto_jump = 'AutoJump: True' in cfg_dict['init_state'] if 'AutoJump:' in cfg_dict['init_state'] else self.auto_jump
         self.max_fall = float(init_state[init_state.index('MaxFall:') + 1]) if 'MaxFall:' in cfg_dict['init_state'] else self.max_fall
-        self.jump_timer = float(init_state[init_state.index('JumpTimer:') + 1]) if 'JumpTimer:' in cfg_dict['init_state'] else self.jump_timer
+        self.jump_timer = max(int(init_state[init_state.index('JumpTimer:') + 1]) - 1, 0) if 'JumpTimer:' in cfg_dict['init_state'] else self.jump_timer
         self.holding = init_state[-1] != 'Holding:' and init_state[init_state.index('Holding:') + 1] != '' if 'Holding:' in init_state else self.holding
 
 
