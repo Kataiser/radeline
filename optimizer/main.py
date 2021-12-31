@@ -3,6 +3,7 @@ import functools
 import os
 import platform
 import random
+import re
 import shutil
 import subprocess
 import sys
@@ -26,6 +27,7 @@ class Radeline:
         validate_settings()
         self.pids: Dict[str, Optional[int]] = get_pids(init=True)
         self.celeste_path: Optional[str] = None
+        self.debugrc_address: Optional[str] = None
         self.improved_lines: List[int] = []
         self.improved_lines_formatted: str = ''
         self.frames_saved_total: int = 0
@@ -74,6 +76,7 @@ class Radeline:
 
         valid_line_nums = order_line_list(valid_line_nums)
         self.celeste_path = psutil.Process(self.pids['celeste']).cwd()
+        self.debugrc_address = get_debugrc_address(self.celeste_path)
         print("Getting reference data")
         # assumes that the TAS is currently functional
         self.run_tas(pauseable=False)
@@ -224,12 +227,14 @@ class Radeline:
         interval: float = float(settings()['session_interval'])
         short_timeout: float = float(settings()['session_short_timeout'])
         long_timeout: float = float(settings()['session_long_timeout'])
+        server_url_start: str = f'{self.debugrc_address}tas/sendhotkey?id=Restart'
+        server_url_tasinfo: str = f'{self.debugrc_address}tas/info'
         tas_has_finished: bool = False
 
         self.paused = False
 
         # start the TAS via DebugRC
-        requests.post('http://localhost:32270/tas/sendhotkey?id=Restart', timeout=long_timeout)
+        requests.post(server_url_start, timeout=long_timeout)
         start_time: float = time.perf_counter()
         last_request_time: float = start_time
 
@@ -243,7 +248,7 @@ class Radeline:
             if current_time - last_request_time >= interval and current_time - start_time > 2:
                 try:
                     # just ask the game when the TAS has finished lol
-                    session_data: str = requests.get('http://localhost:32270/tas/info', timeout=short_timeout).text
+                    session_data: str = requests.get(server_url_tasinfo, timeout=short_timeout).text
                 except requests.ConnectionError:
                     # the game probably crashed
                     self.restart_game()
@@ -444,6 +449,21 @@ def get_pids(silent: bool = False, init: bool = False, allow_exit: bool = True) 
         print("Found Celeste.exe and Celeste Studio.exe")
 
     return found_pids
+
+
+# realistically this is more to check if the server started, cause why would the user change the port
+def get_debugrc_address(celeste_path: str) -> str:
+    with open(os.path.join(celeste_path, 'log.txt'), 'r', encoding='UTF8', errors='replace') as log_txt:
+        log_txt_read: str = log_txt.read()
+
+    debugrc_match = re.search(r'Started DebugRC thread, available via http://localhost:[0-9]+/', log_txt_read)
+
+    if debugrc_match:
+        debugrc_line = log_txt_read[debugrc_match.regs[0][0]:debugrc_match.regs[0][1]]  # there's gotta be a better way of doing this but I'm bad
+        return debugrc_line.split()[-1]
+    else:
+        print("DebugRC server not running, exiting")
+        raise SystemExit
 
 
 # or most likely, disorder
