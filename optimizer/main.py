@@ -77,16 +77,18 @@ class Radeline:
         print("Getting reference data")
         # assumes that the TAS is currently functional
         self.run_tas(pauseable=False)
+        self.target_data = self.parse_save_file(init=True)
 
-        self.target_data = self.parse_save_file()
-        self.target_time = self.og_target_time = self.target_data['time']
-        del self.target_data['time']
-
-        if format_time(self.target_time) == '0:00.000':
+        if not self.target_data:
+            print("Reference data is necessary, exiting")
+            raise SystemExit
+        elif format_time(self.target_data['time']) == '0:00.000':
             print("Target time is 0:00.000, exiting (follow the instructions in the readme)")
             raise SystemExit
 
         # perform the main operation
+        self.target_time = self.og_target_time = self.target_data['time']
+        del self.target_data['time']
         print(f"Target time is {format_time(self.target_time)} with data {self.target_data}")
         backup_tas_file(self.target_time)
         print(f"Beginning optimization ({celeste_tas_len} lines, {len(valid_line_nums)} inputs)\n"
@@ -304,7 +306,7 @@ class Radeline:
                     pass
 
     # read chapter time and current level (room) from debug.celeste
-    def parse_save_file(self) -> dict:
+    def parse_save_file(self, init: bool = False) -> dict:
         try:
             with open(os.path.join(self.celeste_path, 'saves', 'debug.celeste'), 'r') as save_file:
                 save_file_read = save_file.read()
@@ -313,7 +315,7 @@ class Radeline:
             with open(os.path.join(self.celeste_path, 'saves', 'debug.celeste'), 'r') as save_file:
                 save_file_read = save_file.read()
         except FileNotFoundError:
-            print("Can't find debug.celeste, skipping line")
+            print(f"Can't find debug.celeste{'' if init else ', skipping line'}")
             return {}
 
         parsed: dict = {}
@@ -323,7 +325,7 @@ class Radeline:
         if currentsession is None:
             currentsession = soup.find('currentsession')
         if currentsession is None:
-            print("Couldn't find a CurrentSession tag in debug.celeste, guess the game broke? IDK, skipping line anyway")
+            print(f"Couldn't find a CurrentSession tag in debug.celeste, guess the game broke? IDK{'' if init else ', skipping line anyway'}")
             return {}
 
         parsed['time'] = int(currentsession.get('time'))
