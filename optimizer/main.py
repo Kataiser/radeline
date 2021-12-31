@@ -254,7 +254,7 @@ class Radeline:
                     self.restart_game()
                     tas_has_finished = True
                 else:
-                    tas_has_finished = session_data.split("Running")[1].split('<')[0] == ': False'
+                    tas_has_finished = "Running: False" in session_data
 
                     if tas_has_finished:
                         time.sleep(settings()['session_wait'])
