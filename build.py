@@ -26,6 +26,7 @@ def main():
     print('Creating new build folder')
     os.mkdir('Radeline')
     os.mkdir('Radeline\\Optimizer')
+    os.mkdir('Radeline\\Optimizer\\Backups')
     os.mkdir('Radeline\\Simulator')
 
     compile_command = f'{sys.executable} "movement sim\\setup.py" build_ext --inplace'

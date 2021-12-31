@@ -3,6 +3,7 @@ import functools
 import os
 import platform
 import random
+import shutil
 import subprocess
 import sys
 import time
@@ -81,13 +82,13 @@ class Radeline:
         self.target_time = self.og_target_time = self.target_data['time']
         del self.target_data['time']
 
-        if self.target_time == '0:00.000':
+        if format_time(self.target_time) == '0:00.000':
             print("Target time is 0:00.000, exiting (follow the instructions in the readme)")
             raise SystemExit
 
-        print(f"Target time is {format_time(self.target_time)} with data {self.target_data}")
-
         # perform the main operation
+        print(f"Target time is {format_time(self.target_time)} with data {self.target_data}")
+        backup_tas_file(self.target_time)
         print(f"Beginning optimization ({celeste_tas_len} lines, {len(valid_line_nums)} inputs)\n"
               f"Press {pause_key} to pause\n")
         time.sleep(settings()['loading_time_compensation'])
@@ -392,6 +393,20 @@ def access_tas_file(write: List[str] = None) -> Optional[List[str]]:
                 print(f"The TAS path you entered ({path}) seems to be empty, exiting")
         except PermissionError:
             time.sleep(0.5)
+
+
+# backs up the current TAS file before ever trying to modify it, just in case it gets broken somehow
+def backup_tas_file(file_time: int):
+    if not os.path.isdir('Backups'):
+        os.mkdir('Backups')
+        time.sleep(0.2)
+
+    path: str = settings()['tas_path']
+    tas_filename: str = os.path.basename(os.path.splitext(path)[0])
+    time_formatted: str = format_time(file_time).replace(':', '-')
+    output_file = f'Backups\\{tas_filename}_{time_formatted}.tas'
+    shutil.copy(path, output_file)
+    print(f"Backed up to {output_file}")
 
 
 # get the process IDs for Celeste and Studio
