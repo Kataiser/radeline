@@ -442,7 +442,11 @@ def get_pids(silent: bool = False, init: bool = False, allow_exit: bool = True) 
         if not init:
             print("")
 
-        print("Celeste isn't running, exiting")
+        if found_pids['celeste'] and not found_pids['studio']:
+            print("Celeste Studio isn't running, exiting")
+        else:
+            print("Celeste isn't running, exiting")
+
         raise SystemExit
 
     if not silent:
