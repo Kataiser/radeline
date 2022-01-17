@@ -366,6 +366,11 @@ def compare_timecode_frames(timecode_1: int, timecode_2: int) -> int:
     if timecode_1 == timecode_2:
         return 0
     else:
+        if timecode_1 < 10000000 or timecode_2 < 10000000:
+            # this happens rarely, idk how to handle it so just give up
+            print(f"Unparseble timecode: {min(timecode_1, timecode_2)}", file=sys.stderr)
+            return 0
+
         seconds_1: int = int(int(str(timecode_1)[:-7]) % 60)
         seconds_2: int = int(int(str(timecode_2)[:-7]) % 60)
 
