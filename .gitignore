@@ -17,3 +17,4 @@ interpreter_dl_cache.sqlite
 optimizer.c
 optimizer.html
 optimizer/Backups/
+backups/

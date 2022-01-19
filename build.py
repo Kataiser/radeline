@@ -17,6 +17,10 @@ except ImportError:
 def main():
     print("Building Radeline release package\n")
 
+    if os.listdir(r'Radeline\Optimizer\Backups'):
+        print("Backed up the optimizer backups")
+        shutil.copytree(r'Radeline\Optimizer\Backups', 'backups', dirs_exist_ok=True)
+
     if os.path.isdir('Radeline'):
         print("Deleting old build folder")
         shutil.rmtree('Radeline')
