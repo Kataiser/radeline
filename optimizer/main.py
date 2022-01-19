@@ -241,7 +241,7 @@ class Radeline:
         while True:
             current_time: float = time.perf_counter()
 
-            if pauseable and not self.paused and keyboard.is_pressed(self.pause_key_code):
+            if pauseable and not self.paused and keyboard.is_pressed(self.pause_key_code) and not keyboard.is_pressed(42):  # 42 is shift
                 self.paused = True
                 print("\nPause key pressed")  # technically not paused yet
 
