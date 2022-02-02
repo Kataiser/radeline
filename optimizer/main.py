@@ -494,8 +494,11 @@ def ends_with_breakpoint(tas: List[str]) -> bool:
     for line in tas:
         if line in ('***', '***\n'):
             last_line_is_breakpoint = True
-        elif line != '\n' and line.lstrip()[0].isdigit():
-            last_line_is_breakpoint = False
+        else:
+            line_stripped: str = line.lstrip()
+
+            if line_stripped and line_stripped[0].isdigit():
+                last_line_is_breakpoint = False
 
     return last_line_is_breakpoint
 

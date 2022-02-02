@@ -2,7 +2,7 @@
 tas_path: C:\Program Files (x86)\Steam\steamapps\common\Celeste\Celeste.tas
 clear_output_log_on_startup: true
 ensure_breakpoint_end: true
-exit_game_when_done: true
+exit_game_when_done: false
 
 # How many lines to trim off the start and end respectively of the file
 # Useful for ignoring chapter restarts, S&Qs, getting to the chapter complete screen, etc.
