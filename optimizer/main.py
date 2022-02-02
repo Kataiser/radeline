@@ -249,7 +249,7 @@ class Radeline:
                 try:
                     # just ask the game when the TAS has finished lol
                     session_data: str = requests.get(server_url_tasinfo, timeout=short_timeout).text
-                except requests.ConnectionError:
+                except (requests.ConnectionError, requests.ReadTimeout):
                     # the game probably crashed
                     self.restart_game()
                     tas_has_finished = True
