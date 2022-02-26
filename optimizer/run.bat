@@ -1,3 +1,3 @@
 @echo off
-"..\python-3.10.1-embed-win32\python.exe" -I "run.py"
+"..\python-3.10.2-embed-win32\python.exe" -I "run.py"
 pause
