@@ -1,3 +1,4 @@
+import _thread
 import copy
 import functools
 import os
@@ -7,9 +8,10 @@ import re
 import shutil
 import subprocess
 import sys
+import threading
 import time
 import traceback
-from typing import Any, Dict, List, Optional, Sized, TextIO, Union
+from typing import Any, Callable, Dict, List, Optional, Sized, TextIO, Union
 
 import keyboard
 import psutil
@@ -227,11 +229,16 @@ class Radeline:
         interval: float = float(settings()['session_interval'])
         short_timeout: float = float(settings()['session_short_timeout'])
         long_timeout: float = float(settings()['session_long_timeout'])
+        alt_timeout_method: bool = settings()['session_alt_timeout_method']
         server_url_start: str = f'{self.debugrc_address}tas/sendhotkey?id=Restart'
         server_url_tasinfo: str = f'{self.debugrc_address}tas/info'
         tas_has_finished: bool = False
-
         self.paused = False
+
+        if alt_timeout_method:
+            @timeout(short_timeout)
+            def request_force_timeout(url: str):
+                return requests.get(url)
 
         # start the TAS via DebugRC
         requests.post(server_url_start, timeout=long_timeout)
@@ -248,7 +255,10 @@ class Radeline:
             if current_time - last_request_time >= interval and current_time - start_time > 2:
                 try:
                     # just ask the game when the TAS has finished lol
-                    session_data: str = requests.get(server_url_tasinfo, timeout=short_timeout).text
+                    if alt_timeout_method:
+                        session_data: str = request_force_timeout(server_url_tasinfo).text
+                    else:
+                        session_data = requests.get(server_url_tasinfo, timeout=short_timeout).text
                 except (requests.ConnectionError, requests.ReadTimeout):
                     # the game probably crashed
                     self.restart_game()
@@ -503,6 +513,23 @@ def ends_with_breakpoint(tas: List[str]) -> bool:
     return last_line_is_breakpoint
 
 
+# decorator to kill a syncronous function after some time
+def timeout(seconds: float):
+    def outer(func: Callable):
+        def inner(*args, **kwargs):
+            timer: threading.Timer = threading.Timer(seconds, _thread.interrupt_main)
+            timer.start()
+
+            try:
+                result: Any = func(*args, **kwargs)
+            finally:
+                timer.cancel()
+
+            return result
+        return inner
+    return outer
+
+
 # just to make sure the user hasn't broken anything
 def validate_settings():
     try:
@@ -512,10 +539,10 @@ def validate_settings():
         print(f"Couldn't parse settings:\n    {error_tabbed}")
         raise SystemExit
 
-    setting_count: int = 24
+    setting_count: int = 25
     tas_path: str = str(settings()['tas_path'])
     bool_settings = ('exit_game_when_done', 'clear_output_log_on_startup', 'open_tas_when_done', 'extra_attempts', 'keep_celeste_focused',
-                     'ensure_breakpoint_end', 'auto_trim', 'restart_crashed_game', 'kill_notepads', 'optimize_feathers')
+                     'ensure_breakpoint_end', 'auto_trim', 'restart_crashed_game', 'kill_notepads', 'optimize_feathers', 'session_alt_timeout_method')
     int_settings = ('extra_attempts_window_size', 'feather_degree_window_size')
     num_settings = ('loading_time_compensation', 'focus_wait_timeout', 'session_short_timeout', 'session_long_timeout', 'session_interval', 'restart_prewait',
                     'restart_postwait', 'session_wait')  # int or float

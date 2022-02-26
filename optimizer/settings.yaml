@@ -48,6 +48,7 @@ session_interval: 1
 session_wait: 1
 session_short_timeout: 2
 session_long_timeout: 40
+session_alt_timeout_method: false
 
 # It's possible for the game to crash if you load custom maps too many times,
 # so these are for trying to deal with that (waits are in seconds)
