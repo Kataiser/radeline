@@ -5,20 +5,23 @@ import requests
 
 def is_latest_commit():
     try:
-        commit_hash = get_latest_commit(3)
+        commit_hash = get_latest_commit(short_timeout)
     except (requests.Timeout, requests.exceptions.ReadTimeout):
-        print("Timed out getting latest commmit")
+        print(f"Timed out getting latest commmit after {short_timeout} seconds\n")
         return
-    except (requests.RequestException, requests.ConnectionError):
-        print("Couldn't get latest commmit")
+    except (requests.RequestException, requests.ConnectionError) as error:
+        print(f"Error getting latest commmit: {error}\n")
         return
 
     if commit_hash != this_commit:
-        print("Radeline is out of date, please download the latest version from:\n    https://nightly.link/Kataiser/radeline/workflows/build/master/Radeline.zip\n")
+        print("WARNING: Radeline is out of date, please download the latest version from:\n"
+              "    https://nightly.link/Kataiser/radeline/workflows/build/master/Radeline.zip\n"
+              "See what's been changed:\n"
+              "    https://github.com/Kataiser/radeline/commits\n")
 
 
 def update_latest_commit(path: str):
-    commit_hash = get_latest_commit(10)
+    commit_hash = get_latest_commit(long_timeout)
 
     with open(path, 'r+') as update_check_py:
         update_check_py_read = update_check_py.read()
@@ -35,6 +38,8 @@ def get_latest_commit(timeout: int) -> str:
 
 
 this_commit = '{THISCOMMIT}'
+short_timeout = 3
+long_timeout = 10
 
 
 if __name__ == '__main__':
