@@ -12,10 +12,13 @@ import tqdm
 import yaml
 
 import input_formatter
+import update_check
 
 
 class Config:
     def __init__(self):
+        update_check.is_latest_commit()
+
         with open('config.yaml', 'r') as config_file:
             cfg_dict = yaml.safe_load(config_file)
 

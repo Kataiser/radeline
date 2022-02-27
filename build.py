@@ -8,6 +8,8 @@ from io import BytesIO
 
 import requests
 
+import update_check
+
 try:
     import requests_cache
 except ImportError:
@@ -63,6 +65,7 @@ def main():
 
     print("Copied", shutil.copy('README.md', 'Radeline'))
     print("Copied", shutil.copy('LICENSE', 'Radeline'))
+    print("Copied", shutil.copy('update_check.py', 'Radeline'))
     print("Copied", shutil.copy('optimizer\\main.py', 'Radeline\\Optimizer'))
     print("Copied", shutil.copy('optimizer\\run.py', 'Radeline\\Optimizer'))
     print("Copied", shutil.copy('optimizer\\run.bat', 'Radeline\\Optimizer'))
@@ -73,6 +76,9 @@ def main():
     print("Copied", shutil.copy('movement sim\\input_formatter.py', 'Radeline\\Simulator'))
     print("Copied", shutil.copy('movement sim\\run_formatter.py', 'Radeline\\Simulator'))
     print("Copied", shutil.copy('movement sim\\run formatter.bat', 'Radeline\\Simulator'))
+
+    print("Updating lastest commit for update checker")
+    update_check.update_latest_commit('Radeline\\update_check.py')
 
     print("\nBuild finished")
 

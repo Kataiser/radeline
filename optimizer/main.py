@@ -19,6 +19,8 @@ import requests
 import yaml
 from bs4 import BeautifulSoup
 
+import update_check
+
 
 class Radeline:
     def __init__(self):
@@ -27,6 +29,7 @@ class Radeline:
 
         sys.stdout = Logger()
         validate_settings()
+        update_check.is_latest_commit()
         self.pids: Dict[str, Optional[int]] = get_pids(init=True)
         self.celeste_path: Optional[str] = None
         self.debugrc_address: Optional[str] = None
@@ -513,7 +516,7 @@ def ends_with_breakpoint(tas: List[str]) -> bool:
     return last_line_is_breakpoint
 
 
-# decorator to kill a syncronous function after some time
+# decorator to kill a synchronous function after some time
 def timeout(seconds: float):
     def outer(func: Callable):
         def inner(*args, **kwargs):
