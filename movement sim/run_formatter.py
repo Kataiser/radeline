@@ -1,6 +1,6 @@
 import os
 import sys
-sys.path.extend((os.path.abspath('..\\packages'), os.getcwd()))
+sys.path.extend((os.path.abspath('..\\resources\\packages'), os.getcwd()))
 
 import input_formatter
 

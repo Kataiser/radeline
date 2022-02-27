@@ -14,7 +14,7 @@ def is_latest_commit():
         return
 
     if commit_hash != this_commit:
-        print("Radeline is out of date, please download the latest version from:\n    https://nightly.link/Kataiser/radeline/workflows/build/master/Radeline.zip")
+        print("Radeline is out of date, please download the latest version from:\n    https://nightly.link/Kataiser/radeline/workflows/build/master/Radeline.zip\n")
 
 
 def update_latest_commit(path: str):

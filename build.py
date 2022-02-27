@@ -32,6 +32,7 @@ def main():
 
     print('Creating new build folder')
     os.mkdir('Radeline')
+    os.mkdir('Radeline\\resources')
     os.mkdir('Radeline\\Optimizer')
     os.mkdir('Radeline\\Optimizer\\Backups')
     os.mkdir('Radeline\\Simulator')
@@ -50,22 +51,22 @@ def main():
     print(f"Downloading Python interpreter from {interpreter_url}...")
     interpreter_data = requests.get(interpreter_url, timeout=30).content
     with zipfile.ZipFile(BytesIO(interpreter_data), 'r') as interpreter_zip:
-        interpreter_zip.extractall(path=f"Radeline\\{interpreter_url.split('/')[-1][:-4]}\\")
+        interpreter_zip.extractall(path=f"Radeline\\resources\\{interpreter_url.split('/')[-1][:-4]}\\")
 
     packages_dir = site.getsitepackages()[1]
     needed_packages = ['beautifulsoup4', 'bs4', 'certifi', 'charset_normalizer', 'idna', 'keyboard', 'lxml', 'psutil', 'pyperclip', 'requests', 'soupsieve', 'tqdm', 'urllib3', 'yaml']
     for site_package in os.listdir(packages_dir):
         for needed_package in needed_packages:
             if needed_package in site_package and os.path.isdir(f'{packages_dir}\\{site_package}'):
-                shutil.copytree(f'{packages_dir}\\{site_package}', f'Radeline\\packages\\{site_package}')
+                shutil.copytree(f'{packages_dir}\\{site_package}', f'Radeline\\resources\\packages\\{site_package}')
                 break
-    print(f"Copied {len(needed_packages)} packages from {packages_dir} to Radeline\\packages")
-    shutil.rmtree('Radeline\\packages\\psutil\\tests')
-    print("Deleted psutil and bs4 tests")
+    print(f"Copied {len(needed_packages)} packages from {packages_dir} to Radeline\\resources\\packages")
+    shutil.rmtree('Radeline\\resources\\packages\\psutil\\tests')
+    print("Deleted psutil tests")
 
     print("Copied", shutil.copy('README.md', 'Radeline'))
     print("Copied", shutil.copy('LICENSE', 'Radeline'))
-    print("Copied", shutil.copy('update_check.py', 'Radeline'))
+    print("Copied", shutil.copy('update_check.py', 'Radeline\\resources'))
     print("Copied", shutil.copy('optimizer\\main.py', 'Radeline\\Optimizer'))
     print("Copied", shutil.copy('optimizer\\run.py', 'Radeline\\Optimizer'))
     print("Copied", shutil.copy('optimizer\\run.bat', 'Radeline\\Optimizer'))
@@ -78,7 +79,7 @@ def main():
     print("Copied", shutil.copy('movement sim\\run formatter.bat', 'Radeline\\Simulator'))
 
     print("Updating lastest commit for update checker")
-    update_check.update_latest_commit('Radeline\\update_check.py')
+    update_check.update_latest_commit('Radeline\\resources\\update_check.py')
 
     print("\nBuild finished")
 
