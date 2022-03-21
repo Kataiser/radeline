@@ -67,6 +67,7 @@ def main():
     print("Copied", shutil.copy('README.md', 'Radeline'))
     print("Copied", shutil.copy('LICENSE', 'Radeline'))
     print("Copied", shutil.copy('update_check.py', 'Radeline\\resources'))
+    print("Copied", shutil.copy('updater_data.json', 'Radeline\\resources'))
     print("Copied", shutil.copy('optimizer\\main.py', 'Radeline\\Optimizer'))
     print("Copied", shutil.copy('optimizer\\run.py', 'Radeline\\Optimizer'))
     print("Copied", shutil.copy('optimizer\\run.bat', 'Radeline\\Optimizer'))
@@ -78,8 +79,8 @@ def main():
     print("Copied", shutil.copy('movement sim\\run_formatter.py', 'Radeline\\Simulator'))
     print("Copied", shutil.copy('movement sim\\run formatter.bat', 'Radeline\\Simulator'))
 
-    print("Updating lastest commit for update checker")
-    update_check.update_latest_commit('Radeline\\resources\\update_check.py')
+    print("Updating latest commit for update checker")
+    update_check.save_data.update_latest_commit('Radeline\\resources\\updater_data.json')
 
     print("\nBuild finished")
 

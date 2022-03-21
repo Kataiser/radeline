@@ -1,0 +1,12 @@
+{
+    "save": {
+        "this_commit": "",
+        "last_checked": 0,
+        "was_outdated": false
+    },
+    "settings": {
+        "short_timeout": 3,
+        "long_timeout": 10,
+        "check_interval": 1800
+    }
+}
