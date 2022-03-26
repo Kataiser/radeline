@@ -542,13 +542,12 @@ def validate_settings():
         print(f"Couldn't parse settings:\n    {error_tabbed}")
         raise SystemExit
 
-    setting_count: int = 25
+    setting_count: int = 23
     tas_path: str = str(settings()['tas_path'])
-    bool_settings = ('exit_game_when_done', 'clear_output_log_on_startup', 'open_tas_when_done', 'extra_attempts', 'keep_celeste_focused',
-                     'ensure_breakpoint_end', 'auto_trim', 'restart_crashed_game', 'kill_notepads', 'optimize_feathers', 'session_alt_timeout_method')
+    bool_settings = ('exit_game_when_done', 'clear_output_log_on_startup', 'open_tas_when_done', 'extra_attempts', 'ensure_breakpoint_end', 'auto_trim', 'restart_crashed_game',
+                     'kill_notepads', 'optimize_feathers', 'session_alt_timeout_method')
     int_settings = ('extra_attempts_window_size', 'feather_degree_window_size')
-    num_settings = ('loading_time_compensation', 'focus_wait_timeout', 'session_short_timeout', 'session_long_timeout', 'session_interval', 'restart_prewait',
-                    'restart_postwait', 'session_wait')  # int or float
+    num_settings = ('loading_time_compensation', 'session_short_timeout', 'session_long_timeout', 'session_interval', 'restart_prewait', 'restart_postwait', 'session_wait')  # int or float
 
     # makes sure that each setting is what type it needs to be, and some other checks as well
     if not os.path.isfile(tas_path):

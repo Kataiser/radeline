@@ -38,10 +38,6 @@ open_tas_when_done: true
 extra_attempts: true
 extra_attempts_window_size: 5
 
-# Whether to wait until the Celeste window is focused, and if not, how many minutes to wait before giving up
-keep_celeste_focused: true
-focus_wait_timeout: 3
-
 # Used to track if the TAS is still running, using Everest's DebugRC server
 # Don't touch unless you know what you're doing (ask Kataiser if you're having problems)
 session_interval: 1
