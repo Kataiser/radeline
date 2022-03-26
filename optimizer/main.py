@@ -98,7 +98,7 @@ class Radeline:
         self.target_time = self.og_target_time = self.target_data['time']
         del self.target_data['time']
         print(f"Target time is {format_time(self.target_time)} with data {self.target_data}")
-        backup_tas_file(self.target_time)
+        backup_tas_file(self.target_time, False)
         print(f"Beginning optimization ({celeste_tas_len} lines, {len(valid_line_nums)} inputs)\n"
               f"Press {pause_key} to pause\n")
         time.sleep(settings()['loading_time_compensation'])
@@ -124,6 +124,7 @@ class Radeline:
               f"({format_time(self.og_target_time)} -> {format_time(self.target_time)}, -{self.frames_saved_total}f)")
 
         if self.improved_lines_formatted:
+            backup_tas_file(self.target_time, True)
             print(f"Line{pluralize(self.improved_lines)} changed: {self.improved_lines_formatted}")
 
         if settings()['exit_game_when_done']:
@@ -421,15 +422,17 @@ def access_tas_file(write: List[str] = None) -> Optional[List[str]]:
 
 
 # backs up the current TAS file before ever trying to modify it, just in case it gets broken somehow
-def backup_tas_file(file_time: int):
-    if not os.path.isdir('Backups'):
-        os.mkdir('Backups')
+def backup_tas_file(file_time: int, optimized: bool):
+    directory = 'Optimized' if optimized else 'Backups'
+
+    if not os.path.isdir(directory):
+        os.mkdir(directory)
         time.sleep(0.2)
 
     path: str = settings()['tas_path']
     tas_filename: str = os.path.basename(os.path.splitext(path)[0])
     time_formatted: str = format_time(file_time).replace(':', '-')
-    output_file = f'Backups\\{tas_filename}_{time_formatted}.tas'
+    output_file = f'{directory}\\{tas_filename}_{time_formatted}.tas'
     shutil.copy(path, output_file)
     print(f"Backed up to {output_file}")
 

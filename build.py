@@ -35,6 +35,7 @@ def main():
     os.mkdir('Radeline\\resources')
     os.mkdir('Radeline\\Optimizer')
     os.mkdir('Radeline\\Optimizer\\Backups')
+    os.mkdir('Radeline\\Optimizer\\Optimized')
     os.mkdir('Radeline\\Simulator')
 
     compile_command = f'{sys.executable} "movement sim\\setup.py" build_ext --inplace'
