@@ -41,6 +41,8 @@ class Radeline:
         self.og_target_time: int = 0
         self.paused: bool = False
         self.pause_key_code: int = keyboard.key_to_scan_codes(settings()['pause_key'])[0]
+        self.resync_message_time: bool = True
+        self.resync_message_collectables: bool = True
 
     def run(self):
         pause_key: str = settings()['pause_key']
@@ -179,16 +181,23 @@ class Radeline:
             frames_saved = compare_timecode_frames(self.target_time, new_time)
             frames_lost = compare_timecode_frames(new_time, self.target_time)
 
-        # output message if it almost worked
+        # output message(s) if it almost worked
         if new_time > self.target_time and new_data == self.target_data:
-            print(f"Resynced but lost time: ({format_time(new_time)} >= {format_time(self.target_time)}, +{frames_lost}f)")
+            if self.resync_message_time:
+                print(f"Resynced but lost time: ({format_time(new_time)} >= {format_time(self.target_time)}, +{frames_lost}f)")
+                self.resync_message_time = False
+        else:
+            self.resync_message_time = True
         if new_data['room'] == self.target_data['room']:
             time.sleep(settings()['loading_time_compensation'])
 
-            if new_data != self.target_data:
+            if self.resync_message_collectables and new_data != self.target_data:
                 display_data: dict = copy.deepcopy(new_data)
                 del display_data['room']
                 print(f"Resynced but didn't get correct collectibles: {display_data}")
+                self.resync_message_collectables = False
+        else:
+            self.resync_message_collectables = True
 
         # see if it worked (don't count ties)
         if new_time < self.target_time and new_data == self.target_data:
