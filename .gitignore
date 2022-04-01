@@ -18,3 +18,4 @@ optimizer.c
 optimizer.html
 optimizer/Backups/
 backups/
+updater_data.json
