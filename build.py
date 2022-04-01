@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 import site
@@ -81,6 +82,9 @@ def main():
     print("Copied", shutil.copy('movement sim\\run formatter.bat', 'Radeline\\Simulator'))
 
     print("Updating latest commit for update checker")
+    updater_data_default = {'save': {'this_commit': '', 'last_checked': 0, 'was_outdated': False}, 'settings': {'short_timeout': 3, 'long_timeout': 10, 'check_interval': 1800}}
+    with open('updater_data.json', 'w', encoding='UTF8') as updater_data_json:
+        json.dump(updater_data_default, updater_data_json, indent=4, ensure_ascii=False)
     update_check.save_data.update_latest_commit('Radeline\\resources\\updater_data.json')
 
     print("\nBuild finished")
