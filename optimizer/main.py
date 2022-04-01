@@ -352,9 +352,7 @@ class Radeline:
         parsed['cassette'] = currentsession.get('cassette')
         parsed['heart'] = currentsession.get('heartgem')
         parsed['keys'] = len(soup.find_all('keys')[0].find_all('entityid'))
-
-        totalstrawberries = soup.find('totalstrawberries')
-        parsed['berries'] = int(totalstrawberries.text)
+        parsed['berries'] = len(currentsession.find('strawberries').find_all('entityid'))
 
         return parsed
 
