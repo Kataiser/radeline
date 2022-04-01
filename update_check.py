@@ -35,8 +35,8 @@ def get_latest_commit(timeout: int) -> str:
 
 class SaveData:
     def __init__(self):
-        data_paths = ('updater_data.json', '..\\resources\\updater_data.json', '..\\updater_data.json')
-        self.data_path = os.path.abspath([path for path in data_paths if os.path.isfile(path)][0])
+        data_paths = [os.path.abspath(path) for path in ('updater_data.json', '..\\resources\\updater_data.json', '..\\updater_data.json')]
+        self.data_path = [path for path in data_paths if os.path.isfile(path)][0]
         save_data_read = self.read()
 
         self.this_commit = save_data_read['save']['this_commit']
