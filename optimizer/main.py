@@ -37,6 +37,7 @@ class Radeline:
         self.improved_lines_formatted: str = ''
         self.frames_saved_total: int = 0
         self.target_data: dict = {}
+        self.target_deaths: int = 0
         self.target_time: int = 0
         self.og_target_time: int = 0
         self.paused: bool = False
@@ -86,7 +87,7 @@ class Radeline:
         self.debugrc_address = get_debugrc_address(self.celeste_path)
         print("Getting reference data")
         # assumes that the TAS is currently functional
-        self.run_tas(pauseable=False)
+        self.run_tas(init=True)
         self.target_data = self.parse_save_file(init=True)
 
         if not self.target_data:
@@ -99,7 +100,7 @@ class Radeline:
         # perform the main operation
         self.target_time = self.og_target_time = self.target_data['time']
         del self.target_data['time']
-        print(f"Target time is {format_time(self.target_time)} with data {self.target_data}")
+        print(f"Target time is {format_time(self.target_time)} with data {self.target_data} & {self.target_deaths} death{pluralize(self.target_deaths)}")
         backup_tas_file(self.target_time, False)
         print(f"Beginning optimization ({celeste_tas_len} lines, {len(valid_line_nums)} inputs)\n"
               f"Press {pause_key} to pause\n")
@@ -165,7 +166,7 @@ class Radeline:
         access_tas_file(write=celeste_tas)
 
         # run with the changed line
-        self.run_tas(pauseable=True)
+        self.run_tas()
         new_data: dict = self.parse_save_file()
 
         if new_data:
@@ -238,7 +239,7 @@ class Radeline:
         return saved_time
 
     # simulate keypresses to run the last debug command, run the TAS, and wait a bit
-    def run_tas(self, pauseable: bool):
+    def run_tas(self, init: bool = False):
         interval: float = float(settings()['session_interval'])
         short_timeout: float = float(settings()['session_short_timeout'])
         long_timeout: float = float(settings()['session_long_timeout'])
@@ -246,7 +247,11 @@ class Radeline:
         server_url_start: str = f'{self.debugrc_address}tas/sendhotkey?id=Restart'
         server_url_tasinfo: str = f'{self.debugrc_address}tas/info'
         tas_has_finished: bool = False
+        deaths: int = 0
         self.paused = False
+
+        if init:
+            ensure_death_count_info(self.debugrc_address)
 
         if alt_timeout_method:
             @timeout(short_timeout)
@@ -261,11 +266,11 @@ class Radeline:
         while True:
             current_time: float = time.perf_counter()
 
-            if pauseable and not self.paused and keyboard.is_pressed(self.pause_key_code) and not keyboard.is_pressed(42):  # 42 is shift
+            if not init and not self.paused and keyboard.is_pressed(self.pause_key_code) and not keyboard.is_pressed(42):  # 42 is shift
                 self.paused = True
                 print("\nPause key pressed")  # technically not paused yet
 
-            if current_time - last_request_time >= interval and current_time - start_time > 2:
+            if current_time - last_request_time >= interval and current_time - start_time > 1:
                 try:
                     # just ask the game when the TAS has finished lol
                     if alt_timeout_method:
@@ -279,11 +284,19 @@ class Radeline:
                 else:
                     tas_has_finished = "Running: False" in session_data
 
+                    if not tas_has_finished and not init:
+                        deaths_str = session_data.partition('Deaths: ')[2].partition('<')[0] if 'Deaths: ' in session_data else None
+                        deaths = int(deaths_str) if deaths_str else 0
+                        tas_has_finished = deaths > self.target_deaths
+
                     if tas_has_finished:
                         time.sleep(settings()['session_wait'])
 
             if tas_has_finished or current_time - start_time > long_timeout:  # just in case the server based detection fails somehow
                 break
+
+        if init:
+            self.target_deaths = deaths
 
     # perform reduce_line() for a list of line numbers
     def reduce_lines(self, lines: List[int]):
@@ -306,7 +319,7 @@ class Radeline:
                 os.chdir(og_cwd)
                 self.pids = get_pids()
                 print()
-                self.run_tas(pauseable=True)
+                self.run_tas()
 
     # force close the processes of Celeste, Studio, and notepads (optional)
     def close_running_programs(self, include_notepads: bool = False):
@@ -524,6 +537,17 @@ def ends_with_breakpoint(tas: List[str]) -> bool:
                 last_line_is_breakpoint = False
 
     return last_line_is_breakpoint
+
+
+def ensure_death_count_info(address: str):
+    short_timeout = float(settings()['session_short_timeout'])
+    template_page: str = requests.get(f'{address}tas/custominfo', timeout=short_timeout).text
+
+    if 'Deaths: {Session.Deaths}' not in template_page:
+        template = template_page.partition('<pre>')[2].partition('</pre>')[0]
+        template_fixed = (template + '\r\nDeaths: {Session.Deaths}').replace('\r\n', '\\n')
+        requests.post(f'{address}tas/custominfo?template={template_fixed}')
+        print("Added \"Deaths: {Session.Deaths}\" to your custom info template")
 
 
 # decorator to kill a synchronous function after some time
