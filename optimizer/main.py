@@ -295,9 +295,6 @@ class Radeline:
             if tas_has_finished or current_time - start_time > long_timeout:  # just in case the server based detection fails somehow
                 break
 
-        if init:
-            self.target_deaths = deaths
-
     # perform reduce_line() for a list of line numbers
     def reduce_lines(self, lines: List[int]):
         for line_enum in enumerate(lines):
@@ -375,6 +372,9 @@ class Radeline:
         parsed['heart'] = currentsession.get('heartgem')
         parsed['keys'] = len(soup.find_all('keys')[0].find_all('entityid'))
         parsed['berries'] = len(currentsession.find('strawberries').find_all('entityid'))
+
+        if init:
+            self.target_deaths = int(currentsession.get('deaths'))
 
         return parsed
 
