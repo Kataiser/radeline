@@ -27,8 +27,8 @@ class Radeline:
         if sys.version_info.major < 3 or sys.version_info.minor < 6:
             print("Python >= 3.6 is required, exiting")
 
-        sys.stdout = Logger()
         validate_settings()
+        sys.stdout = Logger()
         update_check.is_latest_commit()
         self.pids: Dict[str, Optional[int]] = get_pids(init=True)
         self.celeste_path: Optional[str] = None
