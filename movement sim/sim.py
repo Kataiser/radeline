@@ -43,6 +43,7 @@ class Config:
         self.disabled_key: Optional[str] = str(cfg_dict['disabled_key']).lower()
         self.max_fall: float = float(cfg_dict['max_fall'])
         self.on_ground: bool = bool(cfg_dict['on_ground'])
+        self.ram_check: bool = bool(cfg_dict['ram_check'])
 
         if self.axis not in ('x', 'y'):
             print("Axis must be x or y, exiting")
@@ -265,7 +266,7 @@ def build_input_permutations_sequential(cfg: Config) -> List[tuple]:
     permutation: Tuple[str, ...]
     broke_from_loop: bool = False
     ram_check_iter: int = 0
-    do_ram_check: bool = permutation_count > 3000000
+    do_ram_check: bool = permutation_count > 3000000 and cfg.ram_check
     process: Optional = current_process_if_needed(do_ram_check)
 
     # all hail itertools.product()
@@ -310,7 +311,7 @@ def build_input_permutations_rng(cfg: Config) -> Set[tuple]:
     broke_from_loop_max: bool = False
     broke_from_loop_ram: bool = False
     ram_check_iter: int = 0
-    do_ram_check: bool = min(cfg.permutations, max_permutations) > 5000000
+    do_ram_check: bool = min(cfg.permutations, max_permutations) > 5000000 and cfg.ram_check
     process: Optional = current_process_if_needed(do_ram_check)
 
     for _ in tqdm.trange(cfg.permutations, ncols=100):

@@ -34,6 +34,7 @@ disabled_key: auto  # disable generating certain keys, "auto" or blank will disa
 rng_threshold: 20  # frame count to start using the RNG method when a key is disabled
 rng_threshold_slow: 14  # for when all keys are being generated
 triangular_random: false  # bias toward shorter inputs, may improve precision (disable for performance)
+ram_check: true  # if generating inputs makes your PC run low on RAM, exit early
 
 # Output
 append_keys: ''  # keys the formatter adds, e.g. 'jg' to hold jump and grab as well
