@@ -24,7 +24,8 @@ Now includes a fully working movement simulator, for brute forcing precise posit
 `JumpTimer: {Player.varJumpTimer.toFrame()}`  
 `AutoJump: {Player.AutoJump}`  
 `MaxFall: {Player.maxFall}`  
-`Holding: {Player.Holding}`
+`Holding: {Player.Holding}`  
+`Deaths: {Session.Deaths}`
 
 If you need any assistance or additional functionality, DM me on Discord at Kataiser#4640
 
