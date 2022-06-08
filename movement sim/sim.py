@@ -84,6 +84,9 @@ def main():
                 cfg.disabled_key = 'j'
             elif cfg.speed_init + cfg.frames * 15 <= 160:
                 cfg.disabled_key = 'd'
+    elif (cfg.axis == 'x' and cfg.disabled_key not in ('l', 'r')) or (cfg.axis == 'y' and cfg.disabled_key not in ('j', 'd')):
+        print(f"Didn't disable {cfg.disabled_key.upper()} key since it wouldn't have been generated anyway\n")
+        cfg.disabled_key = None
 
     if cfg.disabled_key:
         print(f"Disabled generating {cfg.disabled_key.upper()} inputs\n")
