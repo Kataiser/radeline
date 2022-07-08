@@ -84,15 +84,23 @@ def main():
                 cfg.disabled_key = 'j'
             elif cfg.speed_init + cfg.frames * 15 <= 160:
                 cfg.disabled_key = 'd'
-    elif (cfg.axis == 'x' and cfg.disabled_key not in ('l', 'r')) or (cfg.axis == 'y' and cfg.disabled_key not in ('j', 'd')):
+    elif (cfg.axis == 'x' and cfg.disabled_key not in ('l', 'r', 'd')) or (cfg.axis == 'y' and cfg.disabled_key not in ('j', 'd')):
         print(f"Didn't disable {cfg.disabled_key.upper()} key since it wouldn't have been generated anyway\n")
         cfg.disabled_key = None
 
     if cfg.disabled_key:
         print(f"Disabled generating {cfg.disabled_key.upper()} inputs\n")
-        use_sequential: bool = cfg.frames < cfg.rng_threshold
+
+    generated_keys_len = len(generator_keys(cfg))
+
+    if generated_keys_len == 3:
+        rng_threshold = cfg.rng_threshold_slow
+    elif generated_keys_len == 4:
+        rng_threshold = cfg.rng_threshold_slow - 2
     else:
-        use_sequential = cfg.frames < cfg.rng_threshold_slow
+        rng_threshold = cfg.rng_threshold
+
+    use_sequential = cfg.frames < rng_threshold
 
     if use_sequential:
         print("Building permutations using sequential method...")
@@ -184,6 +192,7 @@ def sim_x(inputs: tuple, cfg: Config) -> Tuple[float, float]:
     speed_x: float = cfg.speed_init
     input_line: Tuple[int, str]
     mult: float = 1.0 if cfg.on_ground else 0.65
+    grounded = cfg.on_ground
 
     if cfg.holding:
         max_: float = 70.0
@@ -197,14 +206,17 @@ def sim_x(inputs: tuple, cfg: Config) -> Tuple[float, float]:
         for input_key in input_frames:
             # celeste code (from Player.NormalUpdate) somewhat loosely translated from C# to python
 
-            # get inputs first
-            move_x: float = {'l': -1.0, '': 0.0, 'r': 1.0}[input_key]
-
-            # calculate speed second
-            if abs(speed_x) <= max_ or (0.0 if speed_x == 0.0 else float(math.copysign(1, speed_x))) != move_x:
-                speed_x = approach(speed_x, max_ * move_x, 1000.0 / 60.0 * mult)
+            if grounded and input_key == 'd':
+                speed_x = approach(speed_x, 0.0, 500.0 / 60.0)
             else:
-                speed_x = approach(speed_x, max_ * move_x, 400.0 / 60.0 * mult)
+                # get inputs first
+                move_x: float = {'l': -1.0, '': 0.0, 'r': 1.0}[input_key]
+
+                # calculate speed second
+                if abs(speed_x) <= max_ or (0.0 if speed_x == 0.0 else float(math.copysign(1, speed_x))) != move_x:
+                    speed_x = approach(speed_x, max_ * move_x, 1000.0 / 60.0 * mult)
+                else:
+                    speed_x = approach(speed_x, max_ * move_x, 400.0 / 60.0 * mult)
 
             # calculate position third
             x += speed_x / 60.0
@@ -357,19 +369,17 @@ def build_input_permutations_rng(cfg: Config) -> Set[tuple]:
 # determine which keys will be generated
 def generator_keys(cfg: Config) -> Tuple[str, ...]:
     if cfg.axis == 'x':
-        if cfg.disabled_key == 'l':
-            return '', 'r'
-        elif cfg.disabled_key == 'r':
-            return '', 'l'
-        else:
-            return '', 'r', 'l'
+        keys = ['', 'l', 'r']
+
+        if cfg.on_ground:
+            keys.append('d')
     else:
-        if cfg.disabled_key == 'j':
-            return '', 'd'
-        elif cfg.disabled_key == 'd':
-            return '', 'j'
-        else:
-            return '', 'j', 'd'
+        keys = ['', 'j', 'd']
+
+    if cfg.disabled_key:
+        keys.remove(cfg.disabled_key)
+
+    return tuple(keys)
 
 
 # only import psutil and get current process if RAM checking will be done at all
