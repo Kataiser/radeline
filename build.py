@@ -49,7 +49,7 @@ def main():
     else:
         print("Not using DL cache for interpreter")
 
-    interpreter_url = 'https://www.python.org/ftp/python/3.10.7/python-3.10.7-embed-win32.zip'
+    interpreter_url = 'https://www.python.org/ftp/python/3.10.8/python-3.10.8-embed-win32.zip'
     print(f"Downloading Python interpreter from {interpreter_url}...")
     interpreter_data = requests.get(interpreter_url, timeout=30).content
     with zipfile.ZipFile(BytesIO(interpreter_data), 'r') as interpreter_zip:
