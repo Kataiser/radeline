@@ -357,24 +357,24 @@ class Radeline:
             return {}
 
         parsed: dict = {}
-        soup: BeautifulSoup = BeautifulSoup(save_file_read, 'lxml')
+        soup: BeautifulSoup = BeautifulSoup(save_file_read, 'xml')
 
-        currentsession = soup.find('currentsession_safe')
+        currentsession = soup.find('CurrentSession_Safe')
         if currentsession is None:
-            currentsession = soup.find('currentsession')
+            currentsession = soup.find('CurrentSession')
         if currentsession is None:
             print(f"Couldn't find a CurrentSession tag in debug.celeste, guess the game broke? IDK{'' if init else ', skipping line anyway'}")
             return {}
 
-        parsed['time'] = int(currentsession.get('time'))
-        parsed['room'] = currentsession.get('level')
-        parsed['cassette'] = currentsession.get('cassette')
-        parsed['heart'] = currentsession.get('heartgem')
-        parsed['keys'] = len(soup.find_all('keys')[0].find_all('entityid'))
-        parsed['berries'] = len(currentsession.find('strawberries').find_all('entityid'))
+        parsed['time'] = int(currentsession.get('Time'))
+        parsed['room'] = currentsession.get('Level')
+        parsed['cassette'] = currentsession.get('Cassette')
+        parsed['heart'] = currentsession.get('HeartGem')
+        parsed['keys'] = len(soup.find_all('Keys')[0].find_all('EntityID'))
+        parsed['berries'] = len(currentsession.find('Strawberries').find_all('EntityID'))
 
         if init:
-            self.target_deaths = int(currentsession.get('deaths'))
+            self.target_deaths = int(currentsession.get('Deaths'))
 
         return parsed
 
