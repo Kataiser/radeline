@@ -155,7 +155,7 @@ def main():
 
     # format and print permutations, which also saves them to the results file
     for valid_permutation in valid_permutations:
-        perm_display: list = []
+        perm_display: List[List[Union[int, str]]] = []
 
         for input_line in valid_permutation[2]:
             if perm_display and perm_display[-1][1] == input_line[1]:
