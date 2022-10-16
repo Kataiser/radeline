@@ -1,6 +1,6 @@
 Cython~=3.0.0a10
 beautifulsoup4~=4.11.1
-certifi~=2022.6.15
+certifi~=2022.9.24
 charset-normalizer~=2.1.0
 idna~=3.3
 keyboard~=0.13.5
