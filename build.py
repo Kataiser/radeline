@@ -41,7 +41,7 @@ def main():
 
     compile_command = f'{sys.executable} "movement sim\\setup.py" build_ext --inplace'
     subprocess.run(compile_command)
-    print("Copied", shutil.copy('movement sim\\sim_compiled.cp310-win32.pyd', 'Radeline\\Simulator\\'))
+    print("Copied", shutil.copy('movement sim\\sim_compiled.cp311-win_amd64.pyd', 'Radeline\\Simulator\\'))
 
     if requests_cache:
         print("Using DL cache for interpreter")
@@ -49,7 +49,7 @@ def main():
     else:
         print("Not using DL cache for interpreter")
 
-    interpreter_url = 'https://www.python.org/ftp/python/3.10.7/python-3.10.7-embed-win32.zip'
+    interpreter_url = 'https://www.python.org/ftp/python/3.11.0/python-3.11.0-embed-amd64.zip'
     print(f"Downloading Python interpreter from {interpreter_url}...")
     interpreter_data = requests.get(interpreter_url, timeout=30).content
     with zipfile.ZipFile(BytesIO(interpreter_data), 'r') as interpreter_zip:
