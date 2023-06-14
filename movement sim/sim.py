@@ -191,7 +191,8 @@ def sim_x(inputs: tuple, cfg: Config) -> Tuple[float, float]:
     x: float = cfg.pos_init
     speed_x: float = cfg.speed_init
     input_line: Tuple[int, str]
-    mult: float = 1.0 if cfg.on_ground else 0.65
+    mult1: float = 0.0166667 * 1000 if cfg.on_ground else 0.65 * 0.0166667 * 1000
+    mult2: float = 0.0166667 * 400 if cfg.on_ground else 0.65 * 0.0166667 * 400
     grounded = cfg.on_ground
 
     if cfg.holding:
@@ -207,19 +208,19 @@ def sim_x(inputs: tuple, cfg: Config) -> Tuple[float, float]:
             # celeste code (from Player.NormalUpdate) somewhat loosely translated from C# to python
 
             if grounded and input_key == 'd':
-                speed_x = approach(speed_x, 0.0, 500.0 / 60.0)
+                speed_x = approach(speed_x, 0.0, 500 * 0.0166667)
             else:
                 # get inputs first
                 move_x: float = {'l': -1.0, '': 0.0, 'r': 1.0}[input_key]
 
                 # calculate speed second
                 if abs(speed_x) <= max_ or (0.0 if speed_x == 0.0 else float(math.copysign(1, speed_x))) != move_x:
-                    speed_x = approach(speed_x, max_ * move_x, 1000.0 / 60.0 * mult)
+                    speed_x = approach(speed_x, max_ * move_x, mult1)
                 else:
-                    speed_x = approach(speed_x, max_ * move_x, 400.0 / 60.0 * mult)
+                    speed_x = approach(speed_x, max_ * move_x, mult2)
 
             # calculate position third
-            x += speed_x / 60.0
+            x += speed_x * 0.0166667
 
     return float(round(x, 10)), float(round(speed_x, 10))
 
@@ -244,12 +245,16 @@ def sim_y(inputs: tuple, cfg: Config) -> Tuple[float, float]:
 
             # calculate speed second
             if move_y == 1 and speed_y >= 160.0:
-                max_fall = approach(max_fall, 240.0, 300.0 / 60.0)
+                max_fall = approach(max_fall, 240.0, 300 * 0.0166667)
             else:
-                max_fall = approach(max_fall, 160.0, 300.0 / 60.0)
+                max_fall = approach(max_fall, 160.0, 300 * 0.0166667)
 
-            mult: float = 0.5 if (abs(speed_y) <= 40.0 and (input_key == 'j' or cfg.auto_jump)) else 1.0
-            speed_y = approach(speed_y, max_fall, (900.0 * mult) / 60.0)
+            if abs(speed_y) <= 40.0 and (input_key == 'j' or cfg.auto_jump):
+                mult = 900 * 0.5 * 0.0166667
+            else:
+                mult = 900 * 0.0166667
+
+            speed_y = approach(speed_y, max_fall, mult)
 
             if jump_timer > 0:
                 if input_key == 'j' or cfg.auto_jump:
@@ -260,7 +265,7 @@ def sim_y(inputs: tuple, cfg: Config) -> Tuple[float, float]:
             jump_timer -= 1
 
             # calculate position third
-            y += speed_y / 60.0
+            y += speed_y * 0.0166667
 
     return float(round(y, 10)), float(round(speed_y, 10))
 
