@@ -17,10 +17,9 @@ import update_check
 
 class Config:
     def __init__(self):
-        update_check.is_latest_commit()
-
         with open('config.yaml', 'r') as config_file:
             cfg_dict = yaml.safe_load(config_file)
+            self.mtime = os.path.getmtime('config.yaml')
 
         # yes this is awkward but I don't care
         self.frames: int = int(cfg_dict['frames'])
@@ -66,6 +65,16 @@ class Config:
 
 
 def main():
+    config_mtime = sim_main(True)
+
+    while True:
+        input_formatter.main(config_mtime)
+        config_mtime = sim_main(False)
+
+def sim_main(do_update_check: bool) -> float:
+    if do_update_check:
+        update_check.is_latest_commit()
+
     start_time: float = time.perf_counter()
     sys.stdout = Logger()
     cfg: Config = Config()
@@ -183,7 +192,7 @@ def main():
         os.startfile(sys.stdout.filename)
 
     sys.stdout = sys.__stdout__
-    input_formatter.main()
+    return cfg.mtime
 
 
 # simulate X axis inputs

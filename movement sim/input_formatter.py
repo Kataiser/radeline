@@ -1,10 +1,11 @@
+import os
 import time
 
 import pyperclip
 import yaml
 
 
-def main():
+def main(config_mtime=None):
     # this is used to convert from a list of input tuples (e.g. [[2, 'r'], [4, 'l'], [3, '']]) to something that can just be pasted into studio
     # just copy a list from results.txt and it'll automatically become converted in your clipboard
 
@@ -37,6 +38,16 @@ def main():
                 print(out_joined)
                 print()
                 pyperclip.copy(out_joined)
+
+        config_mtime_now = os.path.getmtime('config.yaml')
+
+        if config_mtime and config_mtime_now != config_mtime:
+            if input("config.yaml has been modified, would you like to rerun the simulator? Input Y for yes, anything else for no: ").lower() == 'y':
+                print("")
+                return
+            else:
+                print("")
+                config_mtime = config_mtime_now
 
         time.sleep(0.5)
 
