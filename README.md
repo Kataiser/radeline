@@ -6,7 +6,7 @@ Chaos monkey that optimizes a [Celeste TAS](https://github.com/EverestAPI/Celest
 Now includes a fully working movement simulator, for brute forcing precise position and/or speed values! Not at all related to the main program cause that's not confusing!
 
 ## Download (includes both)
-[Radeline.zip](https://nightly.link/Kataiser/radeline/workflows/build/master/Radeline.zip) (12 MB)
+[Radeline.zip](https://nightly.link/Kataiser/radeline/workflows/build/master/Radeline.zip) (13 MB)
 
 ## Optimizer instructions
 1. Make sure the inputs in your TAS have a breakpoint on the very last line, a console load (or chapter restart) at the beginning, and end on the chapter complete screen (or a S&Q). The goal is to make the game save to debug.celeste
