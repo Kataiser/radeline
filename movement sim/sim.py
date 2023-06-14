@@ -170,7 +170,7 @@ def main():
     del valid_permutations
     gc.collect()
 
-    print()
+    print("")
     sys.stdout.print_enabled = True
     if not use_sequential:
         print(f"Intended permutations: {cfg.permutations}")
