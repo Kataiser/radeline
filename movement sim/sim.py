@@ -26,9 +26,9 @@ class Config:
         self.permutations: int = int(cfg_dict['permutations'])
         self.axis: str = str(cfg_dict['axis'])
         self.jump_timer: int = int(cfg_dict['jump_timer'])
-        self.goal_position: float = float(cfg_dict['goal_position'])
-        self.goal_direction: str = str(cfg_dict['goal_direction'])
         self.goal_speed: float = float(cfg_dict['goal_speed'])
+        self.filter_min: float = float(min(cfg_dict['filter']))
+        self.filter_max: float = float(max(cfg_dict['filter']))
         self.prioritize_speed: bool = bool(cfg_dict['prioritize_speed'])
         self.holding: bool = bool(cfg_dict['holding'])
         self.auto_jump: bool = bool(cfg_dict['auto_jump'])
@@ -47,8 +47,8 @@ class Config:
         if self.axis not in ('x', 'y'):
             print("Axis must be x or y, exiting")
             raise SystemExit
-        if self.goal_direction not in ('-', '+'):
-            print("Goal direction must be - or +, exiting")
+        if len(cfg_dict['filter']) != 2:
+            print("Filter must be two elements, exiting")
             raise SystemExit
         if self.disabled_key not in ('auto', 'l', 'r', 'j', 'd', 'none'):
             print("Disabled key must be auto, l, r, j, d, or just blank. Exiting")
@@ -70,6 +70,7 @@ def main():
     while True:
         input_formatter.main(config_mtime)
         config_mtime = sim_main(False)
+
 
 def sim_main(do_update_check: bool) -> float:
     if do_update_check:
@@ -128,8 +129,8 @@ def sim_main(do_update_check: bool) -> float:
         sim_function: Callable = sim_x if cfg.axis == 'x' else sim_y
         results_pos, results_speed = sim_function(permutation, cfg)
 
-        # if result within goal range
-        if (cfg.goal_direction == '-' and results_pos < cfg.goal_position) or (cfg.goal_direction == '+' and results_pos > cfg.goal_position):
+        # if result within filter range
+        if cfg.filter_min <= results_pos <= cfg.filter_max:
             append_permutation: bool = True
             valid_permutation: Tuple[float, float, tuple]
 
@@ -148,11 +149,11 @@ def sim_main(do_update_check: bool) -> float:
 
     # sort both speed and position, with the second one performed being the prioritized one
     if cfg.prioritize_speed:
-        valid_permutations.sort(reverse=cfg.goal_direction == '+', key=lambda p: p[0])
+        valid_permutations.sort(key=lambda p: p[0])
         valid_permutations.sort(reverse=True, key=lambda p: abs(p[1] - cfg.goal_speed))
     else:
         valid_permutations.sort(reverse=True, key=lambda p: abs(p[1] - cfg.goal_speed))
-        valid_permutations.sort(reverse=cfg.goal_direction == '+', key=lambda p: p[0])
+        valid_permutations.sort(key=lambda p: p[0])
 
     # delete unused permutations from memory
     input_permutations_len: int = len(input_permutations)

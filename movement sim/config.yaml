@@ -26,9 +26,8 @@ max_fall: 160  # 160 if you aren't fast falling yet, current Y speed if you are.
 frames: 12
 permutations: 1000000
 axis: x  # which axis to process, x or y
-goal_position: 160.5
+filter: [150, 160.5]  # only show results within this range
 goal_speed: 90  # this is calculated by |final speed - goal speed|
-goal_direction: '-'  # '-' means approaching from the left/top, '+' is from the right/bottom
 prioritize_speed: false  # sort by speed instead of position
 disabled_key: auto  # disable generating a certain key, "auto" or blank will disable keys that can't ever affect input
 rng_threshold: 20  # frame count to start using the RNG method when a key is disabled
