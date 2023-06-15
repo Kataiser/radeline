@@ -119,7 +119,10 @@ def sim_main(do_update_check: bool) -> float:
         print("Building permutations using RNG method...")
         input_permutations = build_input_permutations_rng(cfg)
 
-    valid_permutations: List[Tuple[float, float, tuple]] = []
+    # store as positions and speed dict, for performance
+    valid_permutations: dict = {}
+    output_permutations: List[Tuple[float, float, tuple]] = []
+    speeds: set = set()
     permutation: tuple
     print("\nSimulating inputs...")
 
@@ -131,40 +134,56 @@ def sim_main(do_update_check: bool) -> float:
 
         # if result within filter range
         if cfg.filter_min <= results_pos <= cfg.filter_max:
-            append_permutation: bool = True
-            valid_permutation: Tuple[float, float, tuple]
+            if results_pos not in valid_permutations:
+                valid_permutations[results_pos] = {}
 
-            # this gets exponentially(?) slower with more permutations
-            if cfg.hide_duplicates:
-                for valid_permutation in valid_permutations:
-                    if results_pos == valid_permutation[0] and results_speed == valid_permutation[1]:
-                        if len(permutation) < len(valid_permutation[2]):
-                            valid_permutations.remove(valid_permutation)
+            if results_speed in valid_permutations[results_pos]:
+                append_permutation: bool = True
+                prev_permutations = valid_permutations[results_pos][results_speed]
+
+                if cfg.hide_duplicates:
+                    for prev_permutation in prev_permutations:
+                        if len(permutation) < len(prev_permutation):
+                            prev_permutations.remove(prev_permutation)
                         else:
                             append_permutation = False
                             break
 
-            if append_permutation:
-                valid_permutations.append((results_pos, results_speed, permutation))
+                if append_permutation:
+                    prev_permutations.append(permutation)
+                    speeds.add(results_speed)
+            else:
+                valid_permutations[results_pos][results_speed] = [permutation]
 
-    # sort both speed and position, with the second one performed being the prioritized one
-    if cfg.prioritize_speed:
-        valid_permutations.sort(key=lambda p: p[0])
-        valid_permutations.sort(reverse=True, key=lambda p: abs(p[1] - cfg.goal_speed))
-    else:
-        valid_permutations.sort(reverse=True, key=lambda p: abs(p[1] - cfg.goal_speed))
-        valid_permutations.sort(key=lambda p: p[0])
-
-    # delete unused permutations from memory
+    # memory cleanup 1
     input_permutations_len: int = len(input_permutations)
     del input_permutations
+    gc.collect()
+
+    # convert optimized dict to sorted list
+    if cfg.prioritize_speed:
+        sorted_positions = sorted(valid_permutations)
+
+        for speed in sorted(speeds, reverse=True, key=lambda s: abs(s - cfg.goal_speed)):
+            for position in sorted_positions:
+                if speed in valid_permutations[position]:
+                    for permutation in valid_permutations[position][speed]:
+                        output_permutations.append((position, speed, permutation))
+    else:
+        for position in sorted(valid_permutations):
+            for speed in sorted(valid_permutations[position], reverse=True, key=lambda s: abs(s - cfg.goal_speed)):
+                for permutation in valid_permutations[position][speed]:
+                    output_permutations.append((position, speed, permutation))
+
+    # memory cleanup 2
+    del valid_permutations
     gc.collect()
 
     print("\nDone, outputting\n")
     sys.stdout.print_enabled = not cfg.silent_output
 
     # format and print permutations, which also saves them to the results file
-    for valid_permutation in valid_permutations:
+    for valid_permutation in output_permutations:
         perm_display: List[List[Union[int, str]]] = []
 
         for input_line in valid_permutation[2]:
@@ -175,9 +194,9 @@ def sim_main(do_update_check: bool) -> float:
 
         print(f'{valid_permutation[:2]} {perm_display}')
 
-    # delete all permutations from memory
-    valid_permutations_len: int = len(valid_permutations)
-    del valid_permutations
+    # memory cleanup 3
+    valid_permutations_len: int = len(output_permutations)
+    del output_permutations
     gc.collect()
 
     print("")
