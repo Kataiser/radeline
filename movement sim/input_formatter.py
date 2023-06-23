@@ -42,7 +42,7 @@ def main(config_mtime=None):
         config_mtime_now = os.path.getmtime('config.yaml')
 
         if config_mtime and config_mtime_now != config_mtime:
-            if input("config.yaml has been modified, would you like to rerun the simulator? Input Y for yes, anything else for no: ").lower() == 'y':
+            if input("config.yaml has been modified, would you like to rerun the simulator? Press enter for yes, input anything else for no: ") == '':
                 print("")
                 return
             else:
