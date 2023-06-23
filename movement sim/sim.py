@@ -72,6 +72,12 @@ class Config:
         self.jump_timer = max(int(init_state[init_state.index('JumpTimer:') + 1]) - 1, 0) if 'JumpTimer:' in cfg_dict['init_state'] else self.jump_timer
         self.holding = 'Holding: Celeste.Holdable' in init_state if 'Holding:' in init_state else self.holding
 
+        for i in range(len(init_state)):
+            if init_state[i].startswith('Retained('):
+                self.speed_init = float(init_state[i + 1])
+                print(f"Assuming retained speed ({self.speed_init:.3f}) applies next frame")
+                break
+
 
 def main():
     config_mtime = sim_main(True)
