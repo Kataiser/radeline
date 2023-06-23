@@ -43,6 +43,7 @@ class Config:
         self.max_fall: float = float(cfg_dict['max_fall'])
         self.on_ground: bool = bool(cfg_dict['on_ground'])
         self.ram_check: bool = bool(cfg_dict['ram_check'])
+        self.append_keys: str = str(cfg_dict['append_keys'])
 
         if self.axis not in ('x', 'y'):
             print("Axis must be x or y, exiting")
@@ -51,8 +52,16 @@ class Config:
             print("Filter must be two elements, exiting")
             raise SystemExit
         if self.disabled_key not in ('auto', 'l', 'r', 'j', 'd', 'none'):
-            print("Disabled key must be auto, l, r, j, d, or just blank. Exiting")
+            print("Disabled key must be auto, l, r, j, d, or just blank, exiting")
             raise SystemExit
+
+        for append_key in self.append_keys:
+            if self.axis == 'x' and append_key.lower() in ('l', 'r'):
+                print(f"Can't have {append_key} in append_keys when axis is X, exiting")
+                raise SystemExit
+            elif self.axis == 'y' and append_key.lower() in ('j', 'd'):
+                print(f"Can't have {append_key} in append_keys when axis is Y, exiting")
+                raise SystemExit
 
         init_state = cfg_dict['init_state'].strip().split()
         axis_offset = 0 if self.axis == 'x' else 1
