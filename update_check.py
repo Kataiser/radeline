@@ -1,6 +1,8 @@
+import datetime
 import json
 import os
 import time
+from typing import Tuple, Union, Sized
 
 import requests
 
@@ -10,7 +12,7 @@ def is_latest_commit():
 
     if time.time() - save_data.last_checked > save_data.check_interval:
         try:
-            commit_hash = get_latest_commit(save_data.short_timeout)
+            commit_hash = get_latest_commit(save_data.short_timeout)[0]
         except (requests.Timeout, requests.exceptions.ReadTimeout):
             print(f"Timed out getting latest commmit after {save_data.short_timeout} seconds\n")
             return
@@ -22,15 +24,25 @@ def is_latest_commit():
         save_data.update_last_checked(outdated)
 
     if outdated or save_data.was_outdated:
-        print("WARNING: Radeline is out of date, please download the latest version from:\n"
+        time_since_commit = datetime.datetime.now(datetime.timezone.utc) - datetime.datetime.fromtimestamp(save_data.this_commit_time, tz=datetime.timezone.utc)
+
+        if time_since_commit.days > 0:
+            time_since_commit_formatted = f"{time_since_commit.days} day{plural(time_since_commit.days)}"
+        else:
+            hours_since_commit = int(time_since_commit.seconds / 3600)
+            time_since_commit_formatted = f"{hours_since_commit} hour{plural(hours_since_commit)}"
+
+        print(f"WARNING: Radeline is {time_since_commit_formatted} out of date, please download the latest version from:\n"
               "    https://nightly.link/Kataiser/radeline/workflows/build/master/Radeline.zip\n"
               "See what's been changed:\n"
               "    https://github.com/Kataiser/radeline/commits\n")
 
 
-def get_latest_commit(timeout: int) -> str:
+def get_latest_commit(timeout: int) -> Tuple[str, int]:
     commit_request = requests.get('https://api.github.com/repos/Kataiser/radeline/commits?per_page=1', timeout=timeout, params={'accept': 'application/vnd.github.v3+json'})
-    return commit_request.json()[0]['sha']
+    commit_request_json = commit_request.json()[0]
+    commit_time = datetime.datetime.fromisoformat(commit_request_json['commit']['author']['date'])
+    return commit_request_json['sha'], round(commit_time.timestamp())
 
 
 class SaveData:
@@ -46,11 +58,17 @@ class SaveData:
         self.long_timeout = save_data_read['settings']['long_timeout']
         self.check_interval = save_data_read['settings']['check_interval']
 
+        try:
+            self.this_commit_time = save_data_read['save']['this_commit_time']
+        except KeyError:
+            self.this_commit_time = 0
+
     def update_latest_commit(self, path):
         self.data_path = path
         latest_commit = get_latest_commit(save_data.long_timeout)
-        out = self.read()
-        out['save']['this_commit'] = latest_commit
+        out = {'save': {'last_checked': 0, 'was_outdated': False}, 'settings': {'short_timeout': 3, 'long_timeout': 10, 'check_interval': 1800}}
+        out['save']['this_commit'] = latest_commit[0]
+        out['save']['this_commit_time'] = latest_commit[1]
         self.write(out)
 
     def update_last_checked(self, was_outdated):
@@ -66,6 +84,13 @@ class SaveData:
     def write(self, data):
         with open(self.data_path, 'w', encoding='UTF8') as save_data_json:
             json.dump(data, save_data_json, indent=4, ensure_ascii=False)
+
+
+def plural(count: Union[int, Sized]) -> str:
+    if isinstance(count, int):
+        return 's' if count != 1 else ''
+    else:
+        return 's' if len(count) != 1 else ''
 
 
 save_data = SaveData()

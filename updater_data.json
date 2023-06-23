@@ -2,7 +2,8 @@
     "save": {
         "this_commit": "",
         "last_checked": 0,
-        "was_outdated": false
+        "was_outdated": false,
+        "this_commit_time": 0
     },
     "settings": {
         "short_timeout": 3,
