@@ -169,6 +169,7 @@ def sim_main(do_update_check: bool) -> float:
                     speeds.add(results_speed)
             else:
                 valid_permutations[results_pos][results_speed] = [permutation]
+                speeds.add(results_speed)
 
     # memory cleanup 1
     input_permutations_len: int = len(input_permutations)
