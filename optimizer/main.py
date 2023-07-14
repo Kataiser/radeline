@@ -285,7 +285,7 @@ class Radeline:
                     tas_has_finished = "Running: False" in session_data
 
                     if not tas_has_finished and not init:
-                        deaths_str = session_data.partition('Deaths: ')[2].partition('<')[0] if 'Deaths: ' in session_data else None
+                        deaths_str = session_data.partition('Deaths: ')[2].partition('\n')[0] if 'Deaths: ' in session_data else None
                         deaths = int(deaths_str) if deaths_str else 0
                         tas_has_finished = deaths > self.target_deaths
 
