@@ -44,6 +44,7 @@ class Config:
         self.on_ground: bool = bool(cfg_dict['on_ground'])
         self.ram_check: bool = bool(cfg_dict['ram_check'])
         self.append_keys: str = str(cfg_dict['append_keys'])
+        self.retained: bool = bool(cfg_dict['retained'])
 
         if self.axis not in ('x', 'y'):
             print("Axis must be x or y, exiting")
@@ -72,11 +73,12 @@ class Config:
         self.jump_timer = max(int(init_state[init_state.index('JumpTimer:') + 1]) - 1, 0) if 'JumpTimer:' in cfg_dict['init_state'] else self.jump_timer
         self.holding = 'Holding: Celeste.Holdable' in init_state if 'Holding:' in init_state else self.holding
 
-        for i in range(len(init_state)):
-            if init_state[i].startswith('Retained('):
-                self.speed_init = float(init_state[i + 1])
-                print(f"Assuming retained speed ({self.speed_init:.3f}) applies next frame")
-                break
+        if self.axis == 'x' and self.retained:
+            for i in range(len(init_state)):
+                if init_state[i].startswith('Retained('):
+                    self.speed_init = float(init_state[i + 1])
+                    print(f"Assuming retained speed ({self.speed_init:.3f}) applies next frame")
+                    break
 
 
 def main():
