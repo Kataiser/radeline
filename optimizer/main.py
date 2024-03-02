@@ -543,11 +543,11 @@ def ensure_death_count_info(address: str):
     short_timeout = float(settings()['session_short_timeout'])
     template_page: str = requests.get(f'{address}tas/custominfo', timeout=short_timeout).text
 
-    if 'Deaths: {Session.Deaths}' not in template_page:
+    if 'Deaths: {Level.Session.Deaths}' not in template_page:
         template = template_page.partition('<pre>')[2].partition('</pre>')[0]
-        template_fixed = (template + '\r\nDeaths: {Session.Deaths}').replace('\r\n', '\\n')
+        template_fixed = (template + '\r\nDeaths: {Level.Session.Deaths}').replace('\r\n', '\\n')
         requests.post(f'{address}tas/custominfo?template={template_fixed}')
-        print("Added \"Deaths: {Session.Deaths}\" to your custom info template")
+        print("Added \"Deaths: {Level.Session.Deaths}\" to your custom info template")
 
 
 # decorator to kill a synchronous function after some time
